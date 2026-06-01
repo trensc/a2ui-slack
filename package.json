@@ -1,0 +1,60 @@
+{
+  "name": "a2ui-slack",
+  "version": "0.1.0",
+  "description": "Community A2UI renderer for Slack — maps A2UI surfaces to Slack Block Kit.",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "conformance": "vitest run test/",
+    "mutation": "stryker run",
+    "verify": "npm run lint && npm run format && npm run typecheck && npm run coverage"
+  },
+  "keywords": [
+    "a2ui",
+    "slack",
+    "block-kit",
+    "renderer",
+    "agent-ui"
+  ],
+  "dependencies": {
+    "@a2ui/web_core": "^0.10.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@slack/types": "^2.14.0",
+    "@stryker-mutator/core": "^8.7.1",
+    "@stryker-mutator/typescript-checker": "^8.7.1",
+    "@stryker-mutator/vitest-runner": "^8.7.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "fast-check": "^4.8.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^2.1.8"
+  }
+}
