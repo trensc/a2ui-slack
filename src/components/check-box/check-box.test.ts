@@ -93,11 +93,37 @@ describe('renderCheckBox', () => {
     expect(text.endsWith('…')).toBe(true);
   });
 
-  it('clips the modal input label to 150 chars', () => {
-    const { blocks } = renderCheckBox(node({ label: 'z'.repeat(200) }), context('modal'));
+  it('clips the modal input label to 2000 chars (option text stays 150)', () => {
+    const { blocks } = renderCheckBox(
+      node({ label: 'z'.repeat(2100) }),
+      context('modal'),
+    );
     const [block] = blocks;
     if (block?.type !== 'input') throw new Error('expected input block');
-    expect(block.label.text).toHaveLength(150);
+    expect(block.label.text).toHaveLength(2000);
+    if (block.element.type !== 'checkboxes') throw new Error('expected checkboxes');
+    expect(block.element.options[0]?.text.text).toHaveLength(150);
+  });
+
+  it('substitutes a placeholder + reports for an empty label', () => {
+    const { blocks, degradations } = renderCheckBox(
+      node({ label: '' }),
+      context('modal'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'input' || block.element.type !== 'checkboxes') {
+      throw new Error('expected checkboxes input');
+    }
+    expect(block.label).toEqual({ type: 'plain_text', text: 'Checkbox' });
+    expect(block.element.options[0]?.text.text).toBe('Checkbox');
+    expect(degradations).toEqual([
+      {
+        componentId: 'cb1',
+        componentType: 'CheckBox',
+        fidelity: 'partial',
+        reason: 'empty checkbox label substituted with placeholder',
+      },
+    ]);
   });
 
   it('round-trips the path through the real codec', () => {

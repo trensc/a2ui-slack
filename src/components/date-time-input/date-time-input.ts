@@ -3,7 +3,6 @@ import type {
   ComponentRenderer,
   DegradationReport,
   RenderContext,
-  RenderResult,
 } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 

@@ -121,15 +121,47 @@ describe('renderTextField', () => {
     expect(block.text.text).toBe('*Name*\n_empty_');
   });
 
-  it('clips the label to 150 chars', () => {
+  it('clips the label to 2000 chars', () => {
     const { blocks } = renderTextField(
-      node({ label: 'x'.repeat(200) }),
+      node({ label: 'x'.repeat(2100) }),
       context('modal'),
     );
     const [block] = blocks;
     if (block?.type !== 'input') throw new Error('expected input block');
-    expect(block.label.text).toHaveLength(150);
+    expect(block.label.text).toHaveLength(2000);
     expect(block.label.text.endsWith('…')).toBe(true);
+  });
+
+  it('substitutes a placeholder + reports for an empty label (editable)', () => {
+    const { blocks, degradations } = renderTextField(
+      node({ label: '' }),
+      context('modal'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'input') throw new Error('expected input block');
+    expect(block.label).toEqual({ type: 'plain_text', text: 'Field' });
+    expect(degradations).toEqual([
+      {
+        componentId: 'tf1',
+        componentType: 'TextField',
+        fidelity: 'partial',
+        reason: 'empty text field label substituted with placeholder',
+      },
+    ]);
+  });
+
+  it('substitutes a placeholder + adds a report for an empty label (read-only)', () => {
+    const { blocks, degradations } = renderTextField(
+      node({ label: '', disabled: true }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'section' || block.text?.type !== 'mrkdwn') {
+      throw new Error('expected section');
+    }
+    expect(block.text.text).toContain('*Field*');
+    expect(degradations).toHaveLength(2);
+    expect(degradations[1]?.reason).toContain('empty text field label');
   });
 
   it('round-trips a path with special chars through the real codec', () => {

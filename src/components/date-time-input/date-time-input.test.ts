@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { KnownBlock } from '@slack/types';
 import type { ActionIdRef } from '../../action-id/action-id-ref.js';
 import {
   decodeActionId,
@@ -8,6 +9,25 @@ import {
 import type { RenderContext } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { renderDateTimeInput } from './date-time-input.js';
+
+/** Narrow an actions block holding a date + time picker to their action_ids. */
+function pickerActionIds(blocks: readonly KnownBlock[]): {
+  dateId: string;
+  timeId: string;
+} {
+  const [block] = blocks;
+  if (
+    block?.type !== 'actions' ||
+    block.elements[0]?.type !== 'datepicker' ||
+    block.elements[1]?.type !== 'timepicker'
+  ) {
+    throw new Error('expected date + time pickers');
+  }
+  return {
+    dateId: block.elements[0].action_id ?? '',
+    timeId: block.elements[1].action_id ?? '',
+  };
+}
 
 function context(surfaceKind: RenderContext['surfaceKind']): RenderContext {
   return {
@@ -185,16 +205,7 @@ describe('renderDateTimeInput', () => {
       node({ mode: 'datetime', value: '2026-06-05T14:30', path }),
       ctx,
     );
-    const [block] = blocks;
-    if (
-      block?.type !== 'actions' ||
-      block.elements[0]?.type !== 'datepicker' ||
-      block.elements[1]?.type !== 'timepicker'
-    ) {
-      throw new Error('expected date + time pickers');
-    }
-    const dateId = block.elements[0].action_id ?? '';
-    const timeId = block.elements[1].action_id ?? '';
+    const { dateId, timeId } = pickerActionIds(blocks);
     const date = decodeActionId(dateId, registry);
     const time = decodeActionId(timeId, registry);
     expect(date.ok && time.ok).toBe(true);

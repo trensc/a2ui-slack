@@ -45,6 +45,25 @@ describe('renderImage', () => {
     ]);
   });
 
+  it('substitutes the url for empty alt_text and reports partial', () => {
+    const result = renderImage(image({ altText: '' }), ctx);
+    expect(result.blocks).toEqual([
+      {
+        type: 'image',
+        image_url: 'https://example.com/cat.png',
+        alt_text: 'https://example.com/cat.png',
+      },
+    ]);
+    expect(result.degradations).toEqual([
+      {
+        componentId: 'img-1',
+        componentType: 'Image',
+        fidelity: 'partial',
+        reason: 'missing alt text; substituted url',
+      },
+    ]);
+  });
+
   it('keeps alt_text exactly at the 2000-char limit unclipped', () => {
     const exact = 'a'.repeat(2000);
     const result = renderImage(image({ altText: exact }), ctx);
