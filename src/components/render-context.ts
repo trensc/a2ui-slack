@@ -32,8 +32,12 @@ export interface RenderResult {
 export interface RenderContext {
   /** Render a child component by id and return its blocks. */
   readonly renderChild: (componentId: string) => RenderResult;
-  /** Encode a Slack-safe (≤255 char) action_id carrying the given meaning. */
-  readonly encodeActionId: (ref: ActionIdRef) => string;
+  /**
+   * Encode a Slack-safe (≤255 char) action_id carrying the given meaning. The
+   * surface layer injects `surfaceId` (a surface concern) so pure renderers stay
+   * surface-agnostic — they supply only `kind`, `componentId`, and `path`.
+   */
+  readonly encodeActionId: (ref: Omit<ActionIdRef, 'surfaceId'>) => string;
   /** The Slack surface kind this tree is being rendered into. */
   readonly surfaceKind: SurfaceKind;
 }
