@@ -1,10 +1,30 @@
+import type { KnownBlock } from '@slack/types';
 import type { ComponentRenderer } from '../render-context.js';
-import { fallbackResult } from '../fallback.js';
+
+const DROP_REASON =
+  'Modal is not in the reduced catalog and cannot be sent to this surface';
 
 /**
- * Stub renderer — Phase 0 placeholder so dispatch is exhaustive and each
- * component task owns exactly one file. The owning task replaces this body with
- * the real Modal → Block Kit mapping.
+ * Modal → V1 placeholder. Modal is not part of the declared reduced catalog, so
+ * the agent should never emit one. If it does arrive, we refuse it loudly: a
+ * single placeholder `section` plus a `dropped` `DegradationReport`. The V2 path
+ * (trigger → `views.open(content)`) is impure I/O and lives in `examples/`, so
+ * this pure renderer ignores `triggerId` / `contentId` entirely.
  */
-export const renderModal: ComponentRenderer<'Modal'> = (node) =>
-  fallbackResult(node, 'not implemented');
+export const renderModal: ComponentRenderer<'Modal'> = (node) => {
+  const block: KnownBlock = {
+    type: 'section',
+    text: { type: 'mrkdwn', text: 'Modal not supported in this surface' },
+  };
+  return {
+    blocks: [block],
+    degradations: [
+      {
+        componentId: node.id,
+        componentType: node.type,
+        fidelity: 'dropped',
+        reason: DROP_REASON,
+      },
+    ],
+  };
+};

@@ -1,26 +1,80 @@
 import { describe, expect, it } from 'vitest';
-import type { RenderContext } from '../render-context.js';
+import type { KnownBlock } from '@slack/types';
+import type { RenderContext, RenderResult } from '../render-context.js';
 import { renderCard } from './card.js';
 
-const ctx: RenderContext = {
-  renderChild: () => ({ blocks: [], degradations: [] }),
-  encodeActionId: () => 't|0',
-  surfaceKind: 'message',
-};
+const section = (text: string): KnownBlock => ({
+  type: 'section',
+  text: { type: 'mrkdwn', text },
+});
+const divider: KnownBlock = { type: 'divider' };
 
-describe('renderCard (stub)', () => {
-  it('drops with a not-implemented report', () => {
-    const { blocks, degradations } = renderCard(
-      { type: 'Card', id: 'id', childId: 'c' },
-      ctx,
-    );
-    expect(blocks).toHaveLength(1);
-    expect(degradations).toEqual([
+function contextFrom(map: Record<string, RenderResult>): RenderContext {
+  return {
+    renderChild: (id) =>
+      map[id] ?? {
+        blocks: [section(`\`${id}\` not supported`)],
+        degradations: [
+          {
+            componentId: id,
+            componentType: 'Text',
+            fidelity: 'dropped',
+            reason: 'missing',
+          },
+        ],
+      },
+    encodeActionId: () => 'a|c',
+    surfaceKind: 'message',
+  };
+}
+
+describe('renderCard', () => {
+  it('wraps the single child in dividers and reports lost container styling', () => {
+    const ctx = contextFrom({ body: { blocks: [section('inner')], degradations: [] } });
+    const result = renderCard({ type: 'Card', id: 'card', childId: 'body' }, ctx);
+    expect(result.blocks).toEqual([divider, section('inner'), divider]);
+    expect(result.degradations).toEqual([
       {
-        componentId: 'id',
+        componentId: 'card',
         componentType: 'Card',
+        fidelity: 'partial',
+        reason: 'no container styling',
+      },
+    ]);
+  });
+
+  it('wraps an empty-bodied child (just two dividers) and still reports', () => {
+    const ctx = contextFrom({ body: { blocks: [], degradations: [] } });
+    const result = renderCard({ type: 'Card', id: 'card', childId: 'body' }, ctx);
+    expect(result.blocks).toEqual([divider, divider]);
+    expect(result.degradations).toEqual([
+      {
+        componentId: 'card',
+        componentType: 'Card',
+        fidelity: 'partial',
+        reason: 'no container styling',
+      },
+    ]);
+  });
+
+  it('propagates a missing child fallback and merges its report after the card report', () => {
+    const result = renderCard(
+      { type: 'Card', id: 'card', childId: 'ghost' },
+      contextFrom({}),
+    );
+    expect(result.blocks).toEqual([divider, section('`ghost` not supported'), divider]);
+    expect(result.degradations).toEqual([
+      {
+        componentId: 'card',
+        componentType: 'Card',
+        fidelity: 'partial',
+        reason: 'no container styling',
+      },
+      {
+        componentId: 'ghost',
+        componentType: 'Text',
         fidelity: 'dropped',
-        reason: 'not implemented',
+        reason: 'missing',
       },
     ]);
   });

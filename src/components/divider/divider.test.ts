@@ -8,17 +8,10 @@ const ctx: RenderContext = {
   surfaceKind: 'message',
 };
 
-describe('renderDivider (stub)', () => {
-  it('drops with a not-implemented report', () => {
-    const { blocks, degradations } = renderDivider({ type: 'Divider', id: 'id' }, ctx);
-    expect(blocks).toHaveLength(1);
-    expect(degradations).toEqual([
-      {
-        componentId: 'id',
-        componentType: 'Divider',
-        fidelity: 'dropped',
-        reason: 'not implemented',
-      },
-    ]);
+describe('renderDivider', () => {
+  it('renders a single divider block with no degradation', () => {
+    const result = renderDivider({ type: 'Divider', id: 'div-1' }, ctx);
+    expect(result.blocks).toEqual([{ type: 'divider' }]);
+    expect(result.degradations).toEqual([]);
   });
 });

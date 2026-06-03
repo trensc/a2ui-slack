@@ -1,10 +1,12 @@
-import type { ComponentRenderer } from '../render-context.js';
-import { fallbackResult } from '../fallback.js';
+import type { DividerBlock } from '@slack/types';
+import type { ComponentRenderer, RenderResult } from '../render-context.js';
 
 /**
- * Stub renderer — Phase 0 placeholder so dispatch is exhaustive and each
- * component task owns exactly one file. The owning task replaces this body with
- * the real Divider → Block Kit mapping.
+ * Divider → a Block Kit `divider`. The resolved node carries no axis, so this is
+ * always a horizontal rule — a faithful mapping with no fidelity loss and thus no
+ * degradation.
  */
-export const renderDivider: ComponentRenderer<'Divider'> = (node) =>
-  fallbackResult(node, 'not implemented');
+export const renderDivider: ComponentRenderer<'Divider'> = (): RenderResult => {
+  const block: DividerBlock = { type: 'divider' };
+  return { blocks: [block], degradations: [] };
+};

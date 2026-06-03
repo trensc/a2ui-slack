@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderContext } from '../render-context.js';
+import type { ResolvedOf } from '../resolved-component.js';
 import { renderModal } from './modal.js';
 
 const ctx: RenderContext = {
@@ -8,20 +9,45 @@ const ctx: RenderContext = {
   surfaceKind: 'message',
 };
 
-describe('renderModal (stub)', () => {
-  it('drops with a not-implemented report', () => {
-    const { blocks, degradations } = renderModal(
-      { type: 'Modal', id: 'id', triggerId: 't', contentId: 'c' },
-      ctx,
-    );
-    expect(blocks).toHaveLength(1);
-    expect(degradations).toEqual([
+const node: ResolvedOf<'Modal'> = {
+  type: 'Modal',
+  id: 'modal-1',
+  triggerId: 'trigger-1',
+  contentId: 'content-1',
+};
+
+describe('renderModal', () => {
+  it('renders a single placeholder section block', () => {
+    const { blocks } = renderModal(node, ctx);
+    expect(blocks).toEqual([
       {
-        componentId: 'id',
-        componentType: 'Modal',
-        fidelity: 'dropped',
-        reason: 'not implemented',
+        type: 'section',
+        text: { type: 'mrkdwn', text: 'Modal not supported in this surface' },
       },
     ]);
+  });
+
+  it('always emits exactly one dropped degradation report', () => {
+    const { degradations } = renderModal(node, ctx);
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]).toEqual({
+      componentId: 'modal-1',
+      componentType: 'Modal',
+      fidelity: 'dropped',
+      reason: 'Modal is not in the reduced catalog and cannot be sent to this surface',
+    });
+  });
+
+  it('does not act on triggerId or contentId (no I/O, no renderChild)', () => {
+    let renderChildCalls = 0;
+    const spyCtx: RenderContext = {
+      ...ctx,
+      renderChild: () => {
+        renderChildCalls += 1;
+        return { blocks: [], degradations: [] };
+      },
+    };
+    renderModal(node, spyCtx);
+    expect(renderChildCalls).toBe(0);
   });
 });

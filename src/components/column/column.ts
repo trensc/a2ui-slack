@@ -1,10 +1,11 @@
 import type { ComponentRenderer } from '../render-context.js';
-import { fallbackResult } from '../fallback.js';
+import { concatChildren } from '../layout-children/concat-children.js';
 
 /**
- * Stub renderer — Phase 0 placeholder so dispatch is exhaustive and each
- * component task owns exactly one file. The owning task replaces this body with
- * the real Column → Block Kit mapping.
+ * Column → Block Kit. The natural container: Block Kit stacks blocks vertically,
+ * so a column is just its children rendered in order and concatenated. Child
+ * blocks flatten into one run and child degradations merge upward; the column
+ * itself loses no fidelity, so it adds no report.
  */
-export const renderColumn: ComponentRenderer<'Column'> = (node) =>
-  fallbackResult(node, 'not implemented');
+export const renderColumn: ComponentRenderer<'Column'> = (node, context) =>
+  concatChildren(node.childrenIds, context);
