@@ -25,6 +25,7 @@ export type {
 // surface
 export { resolveTree } from './surface/resolve-tree.js';
 export type { ResolveTreeInput } from './surface/resolve-tree.js';
+export { resolveSurface } from './surface/resolve-surface.js';
 export type { ResolvedTree } from './surface/resolved-tree.js';
 export { assembleSurface } from './surface/assemble-surface.js';
 export type {
