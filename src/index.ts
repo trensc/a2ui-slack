@@ -26,6 +26,11 @@ export type {
 export { resolveTree } from './surface/resolve-tree.js';
 export type { ResolveTreeInput } from './surface/resolve-tree.js';
 export type { ResolvedTree } from './surface/resolved-tree.js';
+export { assembleSurface } from './surface/assemble-surface.js';
+export type {
+  AssembleSurfaceInput,
+  AssembledSurface,
+} from './surface/assemble-surface.js';
 export type { SurfaceKind, SurfaceTarget } from './surface/surface-target.js';
 
 // inbound effects
