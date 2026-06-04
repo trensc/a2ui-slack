@@ -31,6 +31,11 @@ export type {
   AssembleSurfaceInput,
   AssembledSurface,
 } from './surface/assemble-surface.js';
+export {
+  OMITTED_COMPONENTS,
+  SLACK_CATALOG_ID,
+  buildCapabilities,
+} from './surface/capabilities.js';
 export type { SurfaceKind, SurfaceTarget } from './surface/surface-target.js';
 
 // inbound effects
