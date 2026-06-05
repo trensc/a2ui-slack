@@ -41,6 +41,12 @@ export type { SurfaceKind, SurfaceTarget } from './surface/surface-target.js';
 
 // inbound effects
 export type { InboundEffect, JsonValue } from './actions/inbound-effect.js';
+export { interpretPayload } from './actions/interpret-payload.js';
+export type {
+  BlockActionsPayload,
+  SlackInteractionPayload,
+  ViewSubmissionPayload,
+} from './actions/interpret-payload.js';
 
 // scheduler
 export {
