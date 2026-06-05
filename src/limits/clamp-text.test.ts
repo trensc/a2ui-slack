@@ -6,6 +6,7 @@ import {
   SECTION_TEXT_MAX,
   HEADER_TEXT_MAX,
   BUTTON_TEXT_MAX,
+  INPUT_LABEL_MAX,
 } from './clamp-text.js';
 
 describe('clamp-text constants', () => {
@@ -13,6 +14,7 @@ describe('clamp-text constants', () => {
     expect(SECTION_TEXT_MAX).toBe(3000);
     expect(HEADER_TEXT_MAX).toBe(150);
     expect(BUTTON_TEXT_MAX).toBe(75);
+    expect(INPUT_LABEL_MAX).toBe(2000);
   });
 });
 

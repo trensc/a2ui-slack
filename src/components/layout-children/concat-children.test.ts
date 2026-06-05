@@ -24,7 +24,7 @@ describe('concatChildren', () => {
   });
 
   it('concatenates blocks and degradations in order', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       a: { blocks: [section('a')], degradations: [] },
       b: {
         blocks: [section('b')],
@@ -33,7 +33,7 @@ describe('concatChildren', () => {
         ],
       },
     });
-    const result = concatChildren(['a', 'b'], ctx);
+    const result = concatChildren(['a', 'b'], context);
     expect(result.blocks).toEqual([section('a'), section('b')]);
     expect(result.degradations).toEqual([
       { componentId: 'b', componentType: 'Text', fidelity: 'partial', reason: 'r' },

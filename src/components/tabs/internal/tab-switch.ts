@@ -1,9 +1,9 @@
 import type { ActionsBlock, Button, Overflow, PlainTextOption } from '@slack/types';
 import type { DegradationReport } from '../../render-context.js';
 import { clip } from '../../../limits/clip.js';
+import { BUTTON_TEXT_MAX } from '../../../limits/clamp-text.js';
 
-/** Slack caps button/option text at 75 chars and overflow menus at 5 options. */
-const BUTTON_TEXT_MAX = 75;
+/** Slack caps overflow menus at 5 options. */
 const OVERFLOW_OPTION_MAX = 5;
 /** Keep the button row to a usable size; Slack allows 25 but UX wants few. */
 const BUTTON_TABS_MAX = 5;

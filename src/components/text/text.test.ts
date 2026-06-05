@@ -3,7 +3,7 @@ import type { RenderContext } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { renderText } from './text.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
@@ -15,7 +15,7 @@ function text(partial: Partial<ResolvedOf<'Text'>>): ResolvedOf<'Text'> {
 
 describe('renderText', () => {
   it('renders a body variant as a section mrkdwn block, no degradation', () => {
-    const result = renderText(text({ variant: 'body', text: 'plain body' }), ctx);
+    const result = renderText(text({ variant: 'body', text: 'plain body' }), context);
     expect(result.blocks).toEqual([
       { type: 'section', text: { type: 'mrkdwn', text: 'plain body' } },
     ]);
@@ -23,14 +23,14 @@ describe('renderText', () => {
   });
 
   it('renders an undefined variant as a section mrkdwn block', () => {
-    const result = renderText(text({ text: 'no variant' }), ctx);
+    const result = renderText(text({ text: 'no variant' }), context);
     expect(result.blocks).toEqual([
       { type: 'section', text: { type: 'mrkdwn', text: 'no variant' } },
     ]);
   });
 
   it('renders h1 as a plain_text header block', () => {
-    const result = renderText(text({ variant: 'h1', text: 'Title' }), ctx);
+    const result = renderText(text({ variant: 'h1', text: 'Title' }), context);
     expect(result.blocks).toEqual([
       { type: 'header', text: { type: 'plain_text', text: 'Title' } },
     ]);
@@ -38,28 +38,28 @@ describe('renderText', () => {
   });
 
   it('renders h2 as a plain_text header block', () => {
-    const result = renderText(text({ variant: 'h2', text: 'Subtitle' }), ctx);
+    const result = renderText(text({ variant: 'h2', text: 'Subtitle' }), context);
     expect(result.blocks).toEqual([
       { type: 'header', text: { type: 'plain_text', text: 'Subtitle' } },
     ]);
   });
 
   it('renders h3 (non-heading) as a section block', () => {
-    const result = renderText(text({ variant: 'h3', text: 'H3 text' }), ctx);
+    const result = renderText(text({ variant: 'h3', text: 'H3 text' }), context);
     expect(result.blocks).toEqual([
       { type: 'section', text: { type: 'mrkdwn', text: 'H3 text' } },
     ]);
   });
 
   it('omits the block with no degradation when text is empty', () => {
-    const result = renderText(text({ text: '' }), ctx);
+    const result = renderText(text({ text: '' }), context);
     expect(result.blocks).toEqual([]);
     expect(result.degradations).toEqual([]);
   });
 
   it('keeps section text exactly at the 3000-char limit unclipped', () => {
     const exact = 'a'.repeat(3000);
-    const result = renderText(text({ variant: 'body', text: exact }), ctx);
+    const result = renderText(text({ variant: 'body', text: exact }), context);
     const [block] = result.blocks;
     if (block === undefined || block.type !== 'section' || block.text === undefined) {
       throw new Error('expected a section block');
@@ -69,7 +69,7 @@ describe('renderText', () => {
   });
 
   it('clips section text over 3000 chars with an ellipsis', () => {
-    const result = renderText(text({ variant: 'body', text: 'a'.repeat(3001) }), ctx);
+    const result = renderText(text({ variant: 'body', text: 'a'.repeat(3001) }), context);
     const [block] = result.blocks;
     if (block === undefined || block.type !== 'section' || block.text === undefined) {
       throw new Error('expected a section block');
@@ -80,7 +80,7 @@ describe('renderText', () => {
 
   it('keeps header text exactly at the 150-char limit unclipped', () => {
     const exact = 'h'.repeat(150);
-    const result = renderText(text({ variant: 'h1', text: exact }), ctx);
+    const result = renderText(text({ variant: 'h1', text: exact }), context);
     const [block] = result.blocks;
     if (block === undefined || block.type !== 'header') {
       throw new Error('expected a header block');
@@ -90,7 +90,7 @@ describe('renderText', () => {
   });
 
   it('clips header text over 150 chars with an ellipsis', () => {
-    const result = renderText(text({ variant: 'h2', text: 'h'.repeat(151) }), ctx);
+    const result = renderText(text({ variant: 'h2', text: 'h'.repeat(151) }), context);
     const [block] = result.blocks;
     if (block === undefined || block.type !== 'header') {
       throw new Error('expected a header block');

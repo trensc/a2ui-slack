@@ -30,8 +30,10 @@ function contextFrom(map: Record<string, RenderResult>): RenderContext {
 
 describe('renderCard', () => {
   it('wraps the single child in dividers and reports lost container styling', () => {
-    const ctx = contextFrom({ body: { blocks: [section('inner')], degradations: [] } });
-    const result = renderCard({ type: 'Card', id: 'card', childId: 'body' }, ctx);
+    const context = contextFrom({
+      body: { blocks: [section('inner')], degradations: [] },
+    });
+    const result = renderCard({ type: 'Card', id: 'card', childId: 'body' }, context);
     expect(result.blocks).toEqual([divider, section('inner'), divider]);
     expect(result.degradations).toEqual([
       {
@@ -44,8 +46,8 @@ describe('renderCard', () => {
   });
 
   it('wraps an empty-bodied child (just two dividers) and still reports', () => {
-    const ctx = contextFrom({ body: { blocks: [], degradations: [] } });
-    const result = renderCard({ type: 'Card', id: 'card', childId: 'body' }, ctx);
+    const context = contextFrom({ body: { blocks: [], degradations: [] } });
+    const result = renderCard({ type: 'Card', id: 'card', childId: 'body' }, context);
     expect(result.blocks).toEqual([divider, divider]);
     expect(result.degradations).toEqual([
       {

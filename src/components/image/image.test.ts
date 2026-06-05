@@ -3,7 +3,7 @@ import type { RenderContext } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { renderImage } from './image.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
@@ -21,7 +21,7 @@ function image(partial: Partial<ResolvedOf<'Image'>>): ResolvedOf<'Image'> {
 
 describe('renderImage', () => {
   it('renders an image block with image_url and alt_text, no degradation', () => {
-    const result = renderImage(image({}), ctx);
+    const result = renderImage(image({}), context);
     expect(result.blocks).toEqual([
       {
         type: 'image',
@@ -33,7 +33,7 @@ describe('renderImage', () => {
   });
 
   it('drops with a dropped report when the url is empty', () => {
-    const result = renderImage(image({ url: '' }), ctx);
+    const result = renderImage(image({ url: '' }), context);
     expect(result.blocks).toHaveLength(1);
     expect(result.degradations).toEqual([
       {
@@ -46,7 +46,7 @@ describe('renderImage', () => {
   });
 
   it('substitutes the url for empty alt_text and reports partial', () => {
-    const result = renderImage(image({ altText: '' }), ctx);
+    const result = renderImage(image({ altText: '' }), context);
     expect(result.blocks).toEqual([
       {
         type: 'image',
@@ -66,7 +66,7 @@ describe('renderImage', () => {
 
   it('keeps alt_text exactly at the 2000-char limit unclipped', () => {
     const exact = 'a'.repeat(2000);
-    const result = renderImage(image({ altText: exact }), ctx);
+    const result = renderImage(image({ altText: exact }), context);
     const [block] = result.blocks;
     if (block === undefined || block.type !== 'image') {
       throw new Error('expected an image block');
@@ -76,7 +76,7 @@ describe('renderImage', () => {
   });
 
   it('clips alt_text over 2000 chars with an ellipsis', () => {
-    const result = renderImage(image({ altText: 'a'.repeat(2001) }), ctx);
+    const result = renderImage(image({ altText: 'a'.repeat(2001) }), context);
     const [block] = result.blocks;
     if (block === undefined || block.type !== 'image') {
       throw new Error('expected an image block');

@@ -29,11 +29,14 @@ function contextFrom(map: Record<string, RenderResult>): RenderContext {
 
 describe('renderRow', () => {
   it('collapses two simple text cells into one 2-up section.fields', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       k: { blocks: [section('*Priority*')], degradations: [] },
       v: { blocks: [section('High')], degradations: [] },
     });
-    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['k', 'v'] }, ctx);
+    const result = renderRow(
+      { type: 'Row', id: 'row', childrenIds: ['k', 'v'] },
+      context,
+    );
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -47,7 +50,7 @@ describe('renderRow', () => {
   });
 
   it('merges child degradations through the collapse path', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       k: {
         blocks: [section('k')],
         degradations: [
@@ -56,7 +59,10 @@ describe('renderRow', () => {
       },
       v: { blocks: [section('v')], degradations: [] },
     });
-    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['k', 'v'] }, ctx);
+    const result = renderRow(
+      { type: 'Row', id: 'row', childrenIds: ['k', 'v'] },
+      context,
+    );
     expect(result.blocks).toHaveLength(1);
     expect(result.degradations).toEqual([
       { componentId: 'k', componentType: 'Text', fidelity: 'partial', reason: 'kd' },
@@ -65,11 +71,14 @@ describe('renderRow', () => {
 
   it('clips each collapsed field to the 2000-char limit', () => {
     const long = 'x'.repeat(2500);
-    const ctx = contextFrom({
+    const context = contextFrom({
       k: { blocks: [section(long)], degradations: [] },
       v: { blocks: [section('v')], degradations: [] },
     });
-    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['k', 'v'] }, ctx);
+    const result = renderRow(
+      { type: 'Row', id: 'row', childrenIds: ['k', 'v'] },
+      context,
+    );
     const block = result.blocks[0];
     if (block?.type !== 'section' || block.fields === undefined)
       throw new Error('expected fields');
@@ -77,11 +86,14 @@ describe('renderRow', () => {
   });
 
   it('falls back to a vertical stack when a cell is not a simple section', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       k: { blocks: [section('k')], degradations: [] },
       v: { blocks: [{ type: 'divider' }], degradations: [] },
     });
-    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['k', 'v'] }, ctx);
+    const result = renderRow(
+      { type: 'Row', id: 'row', childrenIds: ['k', 'v'] },
+      context,
+    );
     expect(result.blocks).toEqual([section('k'), { type: 'divider' }]);
     expect(result.degradations).toEqual([
       {
@@ -94,17 +106,20 @@ describe('renderRow', () => {
   });
 
   it('falls back to vertical when the first cell is not collapsible', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       k: { blocks: [{ type: 'divider' }], degradations: [] },
       v: { blocks: [section('v')], degradations: [] },
     });
-    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['k', 'v'] }, ctx);
+    const result = renderRow(
+      { type: 'Row', id: 'row', childrenIds: ['k', 'v'] },
+      context,
+    );
     expect(result.blocks).toEqual([{ type: 'divider' }, section('v')]);
     expect(result.degradations[0]?.reason).toBe('row flattened to vertical');
   });
 
   it('flattens three children vertically with a partial report', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       a: { blocks: [section('a')], degradations: [] },
       b: { blocks: [section('b')], degradations: [] },
       c: {
@@ -116,7 +131,7 @@ describe('renderRow', () => {
     });
     const result = renderRow(
       { type: 'Row', id: 'row', childrenIds: ['a', 'b', 'c'] },
-      ctx,
+      context,
     );
     expect(result.blocks).toEqual([section('a'), section('b'), section('c')]);
     expect(result.degradations).toEqual([
@@ -131,8 +146,8 @@ describe('renderRow', () => {
   });
 
   it('flattens a single-child row vertically (no 2-up collapse)', () => {
-    const ctx = contextFrom({ a: { blocks: [section('only')], degradations: [] } });
-    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['a'] }, ctx);
+    const context = contextFrom({ a: { blocks: [section('only')], degradations: [] } });
+    const result = renderRow({ type: 'Row', id: 'row', childrenIds: ['a'] }, context);
     expect(result.blocks).toEqual([section('only')]);
     expect(result.degradations).toEqual([
       {
@@ -161,10 +176,10 @@ describe('renderRow', () => {
   });
 
   it('propagates a missing child fallback in the vertical path', () => {
-    const ctx = contextFrom({ a: { blocks: [section('a')], degradations: [] } });
+    const context = contextFrom({ a: { blocks: [section('a')], degradations: [] } });
     const result = renderRow(
       { type: 'Row', id: 'row', childrenIds: ['a', 'ghost', 'x'] },
-      ctx,
+      context,
     );
     expect(result.blocks).toEqual([
       section('a'),

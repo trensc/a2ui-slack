@@ -6,6 +6,8 @@ export const SECTION_TEXT_MAX = 3000;
 export const HEADER_TEXT_MAX = 150;
 /** Maximum length of a `button.text` field. */
 export const BUTTON_TEXT_MAX = 75;
+/** Maximum length of an `input` block's `label` (plain_text). */
+export const INPUT_LABEL_MAX = 2000;
 
 /** Clip text destined for a `section.text` slot to Slack's 3000-char limit. */
 export function clampSectionText(text: string): string {

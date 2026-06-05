@@ -1,8 +1,6 @@
 import type { SectionBlock, TextObject } from '@slack/types';
 import type { RenderResult } from '../../render-context.js';
-
-/** Slack caps `section.fields` text at 2000 chars each. */
-const FIELD_TEXT_MAX = 2000;
+import { FIELD_TEXT_MAX } from '../../../limits/clamp-fields.js';
 
 /**
  * A child result that can join a 2-up `section.fields` collapse: exactly one

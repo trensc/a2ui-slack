@@ -191,7 +191,7 @@ describe('renderDateTimeInput', () => {
   it('round-trips the date picker path through the real codec', () => {
     const path = '/events/0/at~1z|q';
     let registry = emptyRegistry;
-    const ctx: RenderContext = {
+    const context: RenderContext = {
       renderChild: () => ({ blocks: [], degradations: [] }),
       encodeActionId: (ref) => {
         const full: ActionIdRef = { ...ref, surfaceId: 's1' };
@@ -203,7 +203,7 @@ describe('renderDateTimeInput', () => {
     };
     const { blocks } = renderDateTimeInput(
       node({ mode: 'datetime', value: '2026-06-05T14:30', path }),
-      ctx,
+      context,
     );
     const { dateId, timeId } = pickerActionIds(blocks);
     const date = decodeActionId(dateId, registry);

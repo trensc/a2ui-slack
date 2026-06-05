@@ -37,7 +37,7 @@ function actionsBlock(result: RenderResult): ActionsBlock {
 
 describe('renderTabs', () => {
   it('renders the active tab with a button switch and partial report', () => {
-    const ctx = contextFrom({ c0: { blocks: [section('zero')], degradations: [] } });
+    const context = contextFrom({ c0: { blocks: [section('zero')], degradations: [] } });
     const result = renderTabs(
       {
         type: 'Tabs',
@@ -45,7 +45,7 @@ describe('renderTabs', () => {
         tabs: [tab('One', 'c0'), tab('Two', 'c1')],
         activeIndex: 0,
       },
-      ctx,
+      context,
     );
     const block = actionsBlock(result);
     expect(block.elements).toHaveLength(2);
@@ -61,7 +61,7 @@ describe('renderTabs', () => {
   });
 
   it('marks only the active tab button primary and gives each a unique action_id', () => {
-    const ctx = contextFrom({ c1: { blocks: [section('one')], degradations: [] } });
+    const context = contextFrom({ c1: { blocks: [section('one')], degradations: [] } });
     const result = renderTabs(
       {
         type: 'Tabs',
@@ -69,7 +69,7 @@ describe('renderTabs', () => {
         tabs: [tab('A', 'c0'), tab('B', 'c1')],
         activeIndex: 1,
       },
-      ctx,
+      context,
     );
     const block = actionsBlock(result);
     const [b0, b1] = block.elements;
@@ -85,7 +85,7 @@ describe('renderTabs', () => {
   });
 
   it('clamps an activeIndex above range to the last tab and reports it', () => {
-    const ctx = contextFrom({ c1: { blocks: [section('last')], degradations: [] } });
+    const context = contextFrom({ c1: { blocks: [section('last')], degradations: [] } });
     const result = renderTabs(
       {
         type: 'Tabs',
@@ -93,7 +93,7 @@ describe('renderTabs', () => {
         tabs: [tab('A', 'c0'), tab('B', 'c1')],
         activeIndex: 9,
       },
-      ctx,
+      context,
     );
     expect(result.blocks[1]).toEqual(section('last'));
     expect(result.degradations).toContainEqual({
@@ -105,7 +105,7 @@ describe('renderTabs', () => {
   });
 
   it('clamps a negative activeIndex to the first tab and reports it', () => {
-    const ctx = contextFrom({ c0: { blocks: [section('first')], degradations: [] } });
+    const context = contextFrom({ c0: { blocks: [section('first')], degradations: [] } });
     const result = renderTabs(
       {
         type: 'Tabs',
@@ -113,7 +113,7 @@ describe('renderTabs', () => {
         tabs: [tab('A', 'c0'), tab('B', 'c1')],
         activeIndex: -3,
       },
-      ctx,
+      context,
     );
     expect(result.blocks[1]).toEqual(section('first'));
     expect(result.degradations).toContainEqual({
@@ -142,7 +142,7 @@ describe('renderTabs', () => {
 
   it('clips long tab titles to the 75-char button limit', () => {
     const long = 'T'.repeat(120);
-    const ctx = contextFrom({ c0: { blocks: [section('x')], degradations: [] } });
+    const context = contextFrom({ c0: { blocks: [section('x')], degradations: [] } });
     const result = renderTabs(
       {
         type: 'Tabs',
@@ -150,7 +150,7 @@ describe('renderTabs', () => {
         tabs: [tab(long, 'c0'), tab('B', 'c1')],
         activeIndex: 0,
       },
-      ctx,
+      context,
     );
     const block = actionsBlock(result);
     const b0 = block.elements[0];
@@ -162,8 +162,11 @@ describe('renderTabs', () => {
     const tabs = Array.from({ length: 7 }, (_, i) =>
       tab(`T${String(i)}`, `c${String(i)}`),
     );
-    const ctx = contextFrom({ c2: { blocks: [section('two')], degradations: [] } });
-    const result = renderTabs({ type: 'Tabs', id: 'tabs', tabs, activeIndex: 2 }, ctx);
+    const context = contextFrom({ c2: { blocks: [section('two')], degradations: [] } });
+    const result = renderTabs(
+      { type: 'Tabs', id: 'tabs', tabs, activeIndex: 2 },
+      context,
+    );
     const block = actionsBlock(result);
     const overflow = block.elements[0];
     if (overflow?.type !== 'overflow') throw new Error('expected overflow');
@@ -182,8 +185,11 @@ describe('renderTabs', () => {
     const tabs = Array.from({ length: 6 }, (_, i) =>
       tab(`T${String(i)}`, `c${String(i)}`),
     );
-    const ctx = contextFrom({ c0: { blocks: [section('zero')], degradations: [] } });
-    const result = renderTabs({ type: 'Tabs', id: 'tabs', tabs, activeIndex: 0 }, ctx);
+    const context = contextFrom({ c0: { blocks: [section('zero')], degradations: [] } });
+    const result = renderTabs(
+      { type: 'Tabs', id: 'tabs', tabs, activeIndex: 0 },
+      context,
+    );
     const block = actionsBlock(result);
     const overflow = block.elements[0];
     if (overflow?.type !== 'overflow') throw new Error('expected overflow');
@@ -198,7 +204,7 @@ describe('renderTabs', () => {
   });
 
   it('propagates the active tab child degradations after the tab reports', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       c0: {
         blocks: [section('zero')],
         degradations: [
@@ -213,7 +219,7 @@ describe('renderTabs', () => {
     });
     const result = renderTabs(
       { type: 'Tabs', id: 'tabs', tabs: [tab('One', 'c0')], activeIndex: 0 },
-      ctx,
+      context,
     );
     expect(result.degradations).toEqual([
       {

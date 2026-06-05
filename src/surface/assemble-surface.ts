@@ -49,8 +49,8 @@ interface Walk {
  */
 export function assembleSurface(input: AssembleSurfaceInput): AssembledSurface {
   const walk: Walk = { registry: input.registry, notices: [] };
-  const ctx = buildContext(input, walk);
-  const rendered = ctx.renderChild(input.tree.root);
+  const context = buildContext(input, walk);
+  const rendered = context.renderChild(input.tree.root);
   const max = input.surfaceKind === 'message' ? MESSAGE_BLOCK_MAX : VIEW_BLOCK_MAX;
   if (!clampBlocks(rendered.blocks, max).truncated) {
     return {
@@ -75,7 +75,7 @@ export function assembleSurface(input: AssembleSurfaceInput): AssembledSurface {
 }
 
 function buildContext(input: AssembleSurfaceInput, walk: Walk): RenderContext {
-  const ctx: RenderContext = {
+  const context: RenderContext = {
     surfaceKind: input.surfaceKind,
     renderChild: (id: string): RenderResult => {
       const node = input.tree.byId.get(id);
@@ -83,7 +83,7 @@ function buildContext(input: AssembleSurfaceInput, walk: Walk): RenderContext {
         walk.notices.push(`missing component: ${id}`);
         return missingBlock(id);
       }
-      return renderComponent(node, ctx);
+      return renderComponent(node, context);
     },
     encodeActionId: (ref: Omit<ActionIdRef, 'surfaceId'>): string => {
       const result = encodeActionId(
@@ -94,7 +94,7 @@ function buildContext(input: AssembleSurfaceInput, walk: Walk): RenderContext {
       return result.id;
     },
   };
-  return ctx;
+  return context;
 }
 
 function missingBlock(id: string): RenderResult {

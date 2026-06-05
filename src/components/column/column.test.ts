@@ -40,7 +40,7 @@ describe('renderColumn', () => {
   });
 
   it('concatenates children in order, merging degradations', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       a: { blocks: [section('a')], degradations: [] },
       b: {
         blocks: [section('b1'), section('b2')],
@@ -56,7 +56,7 @@ describe('renderColumn', () => {
     });
     const result = renderColumn(
       { type: 'Column', id: 'col', childrenIds: ['a', 'b'] },
-      ctx,
+      context,
     );
     expect(result.blocks).toEqual([section('a'), section('b1'), section('b2')]);
     expect(result.degradations).toEqual([
@@ -91,18 +91,18 @@ describe('renderColumn', () => {
       card: { type: 'Card', id: 'card', childId: 'inner' },
       inner: { type: 'Column', id: 'inner', childrenIds: ['leaf'] },
     };
-    const ctx: RenderContext = {
+    const context: RenderContext = {
       renderChild: (id) => {
         const node = tree[id];
         if (node === undefined) return { blocks: [section('leaf')], degradations: [] };
-        if (node.type === 'Card') return renderCard(node, ctx);
-        if (node.type === 'Column') return renderColumn(node, ctx);
+        if (node.type === 'Card') return renderCard(node, context);
+        if (node.type === 'Column') return renderColumn(node, context);
         return { blocks: [], degradations: [] };
       },
       encodeActionId: () => 'a|c',
       surfaceKind: 'message',
     };
-    const result = renderColumn(outer, ctx);
+    const result = renderColumn(outer, context);
     expect(result.blocks).toEqual([
       { type: 'divider' },
       section('leaf'),

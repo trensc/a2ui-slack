@@ -1,7 +1,8 @@
 import { clip } from '../../../limits/clip.js';
+import { BUTTON_TEXT_MAX } from '../../../limits/clamp-text.js';
 
-/** Slack's hard limit on `button.text`. Empty text is rejected outright. */
-export const BUTTON_TEXT_MAX = 75;
+/** Slack's hard limit on `button.text` — re-exported from the single source. */
+export { BUTTON_TEXT_MAX };
 
 /** Stand-in shown when an A2UI Button has an empty label — Slack rejects ''. */
 export const PLACEHOLDER_LABEL = 'Button';

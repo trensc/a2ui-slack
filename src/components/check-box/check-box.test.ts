@@ -129,7 +129,7 @@ describe('renderCheckBox', () => {
   it('round-trips the path through the real codec', () => {
     const path = '/flags/agreed~1now';
     let registry = emptyRegistry;
-    const ctx: RenderContext = {
+    const context: RenderContext = {
       renderChild: () => ({ blocks: [], degradations: [] }),
       encodeActionId: (ref) => {
         const full: ActionIdRef = { ...ref, surfaceId: 's1' };
@@ -139,7 +139,7 @@ describe('renderCheckBox', () => {
       },
       surfaceKind: 'modal',
     };
-    const { blocks } = renderCheckBox(node({ path }), ctx);
+    const { blocks } = renderCheckBox(node({ path }), context);
     const [block] = blocks;
     if (block?.type !== 'input' || block.element.type !== 'checkboxes') {
       throw new Error('expected checkboxes input');

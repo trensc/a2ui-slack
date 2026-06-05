@@ -21,7 +21,7 @@ import { renderChoicePicker } from './choice-picker/choice-picker.js';
 import { renderSlider } from './slider/slider.js';
 import { renderDateTimeInput } from './date-time-input/date-time-input.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: (ref) => `enc|${ref.kind}|${ref.componentId}|${ref.path ?? ''}`,
   surfaceKind: 'message',
@@ -121,7 +121,7 @@ describe('renderComponent', () => {
     'routes %s to its own renderer (output identical to calling it directly)',
     (_label, c) => {
       // If the switch routed to the wrong renderer, the deep-equal would diverge.
-      expect(renderComponent(c.node, ctx)).toEqual(c.renderer(c.node, ctx));
+      expect(renderComponent(c.node, context)).toEqual(c.renderer(c.node, context));
     },
   );
 

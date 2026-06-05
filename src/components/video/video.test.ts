@@ -3,7 +3,7 @@ import type { RenderContext } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { renderVideo } from './video.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
@@ -17,7 +17,7 @@ const REASON = 'no native video block in Block Kit';
 
 describe('renderVideo', () => {
   it('renders a link using altText as the label with a partial report', () => {
-    const result = renderVideo(video({ altText: 'Watch this' }), ctx);
+    const result = renderVideo(video({ altText: 'Watch this' }), context);
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -35,7 +35,7 @@ describe('renderVideo', () => {
   });
 
   it('falls back to the default label when altText is undefined', () => {
-    const result = renderVideo(video({}), ctx);
+    const result = renderVideo(video({}), context);
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -45,7 +45,7 @@ describe('renderVideo', () => {
   });
 
   it('falls back to the default label when altText is the empty string', () => {
-    const result = renderVideo(video({ altText: '' }), ctx);
+    const result = renderVideo(video({ altText: '' }), context);
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -55,7 +55,7 @@ describe('renderVideo', () => {
   });
 
   it('omits the block but still reports partial when the url is empty', () => {
-    const result = renderVideo(video({ url: '', altText: 'Watch' }), ctx);
+    const result = renderVideo(video({ url: '', altText: 'Watch' }), context);
     expect(result.blocks).toEqual([]);
     expect(result.degradations).toEqual([
       {

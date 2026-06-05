@@ -3,7 +3,7 @@ import type { RenderContext } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { renderAudioPlayer } from './audio-player.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
@@ -17,7 +17,7 @@ const REASON = 'no native audio block in Block Kit';
 
 describe('renderAudioPlayer', () => {
   it('renders a link using altText as the label with a partial report', () => {
-    const result = renderAudioPlayer(audio({ altText: 'Listen now' }), ctx);
+    const result = renderAudioPlayer(audio({ altText: 'Listen now' }), context);
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -35,7 +35,7 @@ describe('renderAudioPlayer', () => {
   });
 
   it('falls back to the default label when altText is undefined', () => {
-    const result = renderAudioPlayer(audio({}), ctx);
+    const result = renderAudioPlayer(audio({}), context);
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -45,7 +45,7 @@ describe('renderAudioPlayer', () => {
   });
 
   it('falls back to the default label when altText is the empty string', () => {
-    const result = renderAudioPlayer(audio({ altText: '' }), ctx);
+    const result = renderAudioPlayer(audio({ altText: '' }), context);
     expect(result.blocks).toEqual([
       {
         type: 'section',
@@ -55,7 +55,7 @@ describe('renderAudioPlayer', () => {
   });
 
   it('omits the block but still reports partial when the url is empty', () => {
-    const result = renderAudioPlayer(audio({ url: '', altText: 'Listen' }), ctx);
+    const result = renderAudioPlayer(audio({ url: '', altText: 'Listen' }), context);
     expect(result.blocks).toEqual([]);
     expect(result.degradations).toEqual([
       {

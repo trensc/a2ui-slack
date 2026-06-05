@@ -14,10 +14,11 @@ import type {
 } from '../render-context.js';
 import type { ChoiceOption, ResolvedOf } from '../resolved-component.js';
 import { clip } from '../../limits/clip.js';
-
-const OPTION_TEXT_MAX = 150;
-const RADIO_LIMIT = 10;
-const SELECT_LIMIT = 100;
+import {
+  OPTION_TEXT_MAX,
+  RADIO_OPTION_MAX,
+  SELECT_OPTION_MAX,
+} from '../../limits/clamp-options.js';
 
 type SelectElement = RadioButtons | StaticSelect | Checkboxes | MultiStaticSelect;
 
@@ -38,7 +39,7 @@ export const renderChoicePicker: ComponentRenderer<'ChoicePicker'> = (node, cont
     componentId: node.id,
     path: node.path,
   });
-  const kept = node.options.slice(0, SELECT_LIMIT);
+  const kept = node.options.slice(0, SELECT_OPTION_MAX);
   const options = kept.map(toOption);
   const element = buildElement(node, actionId, kept.length, options);
   const block =
@@ -64,11 +65,11 @@ function buildElement(
   const selectedSet = new Set(node.selected);
   const chosen = options.filter((option) => selectedSet.has(option.value));
   if (node.multiple) {
-    return count <= RADIO_LIMIT
+    return count <= RADIO_OPTION_MAX
       ? checkboxes(actionId, options, chosen)
       : multiSelect(actionId, options, chosen);
   }
-  return count <= RADIO_LIMIT
+  return count <= RADIO_OPTION_MAX
     ? radioButtons(actionId, options, chosen[0])
     : staticSelect(actionId, options, chosen[0]);
 }
@@ -147,7 +148,7 @@ function inputBlock(
 }
 
 function overflowReports(node: ResolvedOf<'ChoicePicker'>): readonly DegradationReport[] {
-  if (node.options.length <= SELECT_LIMIT) return [];
+  if (node.options.length <= SELECT_OPTION_MAX) return [];
   return [
     {
       componentId: node.id,

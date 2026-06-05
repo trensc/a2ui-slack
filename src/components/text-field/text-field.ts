@@ -7,9 +7,7 @@ import type {
 } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { clip } from '../../limits/clip.js';
-
-/** Slack caps an input block's label at 2000 chars. */
-const LABEL_MAX = 2000;
+import { INPUT_LABEL_MAX, clampSectionText } from '../../limits/clamp-text.js';
 /** Shown when the label resolves to empty (Slack rejects empty plain_text). */
 const EMPTY_LABEL_PLACEHOLDER = 'Field';
 
@@ -55,7 +53,7 @@ function renderEditable(
   const block: InputBlock = {
     type: 'input',
     block_id: actionId,
-    label: { type: 'plain_text', text: clip(label.text, LABEL_MAX) },
+    label: { type: 'plain_text', text: clip(label.text, INPUT_LABEL_MAX) },
     element: textInput(node, actionId, context.surfaceKind === 'message'),
     ...(context.surfaceKind === 'message' ? { dispatch_action: true } : {}),
   };
@@ -80,12 +78,12 @@ function textInput(
 
 function renderReadOnly(node: ResolvedOf<'TextField'>): RenderResult {
   const label = resolveLabel(node.label);
+  const value = node.value === '' ? '_empty_' : node.value;
   const block: SectionBlock = {
     type: 'section',
-    text: {
-      type: 'mrkdwn',
-      text: `*${clip(label.text, LABEL_MAX)}*\n${node.value === '' ? '_empty_' : node.value}`,
-    },
+    // Clamp the whole composite (label + value), not just the label: Slack caps
+    // section.text at 3000 and rejects the entire message if it overflows.
+    text: { type: 'mrkdwn', text: clampSectionText(`*${label.text}*\n${value}`) },
   };
   return {
     blocks: [block],

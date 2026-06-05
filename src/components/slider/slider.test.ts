@@ -136,7 +136,7 @@ describe('renderSlider', () => {
   it('round-trips the path through the real codec', () => {
     const path = '/levels/0~1x|y';
     let registry = emptyRegistry;
-    const ctx: RenderContext = {
+    const context: RenderContext = {
       renderChild: () => ({ blocks: [], degradations: [] }),
       encodeActionId: (ref) => {
         const full: ActionIdRef = { ...ref, surfaceId: 's1' };
@@ -146,7 +146,7 @@ describe('renderSlider', () => {
       },
       surfaceKind: 'message',
     };
-    const { blocks } = renderSlider(node({ path }), ctx);
+    const { blocks } = renderSlider(node({ path }), context);
     const [block] = blocks;
     if (block?.type !== 'actions' || block.elements[0]?.type !== 'static_select') {
       throw new Error('expected static_select');

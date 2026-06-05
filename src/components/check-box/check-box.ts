@@ -6,10 +6,9 @@ import type {
 } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { clip } from '../../limits/clip.js';
+import { OPTION_TEXT_MAX } from '../../limits/clamp-options.js';
+import { INPUT_LABEL_MAX } from '../../limits/clamp-text.js';
 
-/** Slack caps option text at 150 and an input block's label at 2000. */
-const OPTION_TEXT_MAX = 150;
-const LABEL_MAX = 2000;
 /** Shown when the label resolves to empty (Slack rejects empty plain_text). */
 const EMPTY_LABEL_PLACEHOLDER = 'Checkbox';
 
@@ -74,7 +73,7 @@ function asInput(
   const block: InputBlock = {
     type: 'input',
     block_id: actionId,
-    label: { type: 'plain_text', text: clip(labelText, LABEL_MAX) },
+    label: { type: 'plain_text', text: clip(labelText, INPUT_LABEL_MAX) },
     optional: true,
     element,
   };

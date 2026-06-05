@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { RenderContext } from '../render-context.js';
 import { renderDivider } from './divider.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
@@ -10,7 +10,7 @@ const ctx: RenderContext = {
 
 describe('renderDivider', () => {
   it('renders a single divider block with no degradation', () => {
-    const result = renderDivider({ type: 'Divider', id: 'div-1' }, ctx);
+    const result = renderDivider({ type: 'Divider', id: 'div-1' }, context);
     expect(result.blocks).toEqual([{ type: 'divider' }]);
     expect(result.degradations).toEqual([]);
   });

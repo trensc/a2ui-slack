@@ -4,7 +4,7 @@ import type { ComponentRenderer, DegradationReport } from '../render-context.js'
 /**
  * Card → Block Kit. Block Kit has no bordered container, so a card degrades to
  * visual grouping: a `divider`, the single child's blocks, then a closing
- * `divider`. The child renders via `ctx.renderChild(childId)`; its blocks slot
+ * `divider`. The child renders via `context.renderChild(childId)`; its blocks slot
  * between the rules and its degradations merge upward after the card's own
  * `partial` report (container styling is lost). Never silent.
  */

@@ -251,7 +251,7 @@ describe('renderChoicePicker', () => {
   it('round-trips the path through the real codec', () => {
     const path = '/picks/0~1weird|x';
     let registry = emptyRegistry;
-    const ctx: RenderContext = {
+    const context: RenderContext = {
       renderChild: () => ({ blocks: [], degradations: [] }),
       encodeActionId: (ref) => {
         const full: ActionIdRef = { ...ref, surfaceId: 's1' };
@@ -261,7 +261,7 @@ describe('renderChoicePicker', () => {
       },
       surfaceKind: 'message',
     };
-    const { blocks } = renderChoicePicker(node({ path }), ctx);
+    const { blocks } = renderChoicePicker(node({ path }), context);
     const [block] = blocks;
     if (block?.type !== 'actions' || block.elements[0]?.type !== 'radio_buttons') {
       throw new Error('expected radio_buttons');

@@ -28,45 +28,45 @@ import { renderDateTimeInput } from './date-time-input/date-time-input.js';
 // eslint-disable-next-line complexity -- exhaustive 18-way dispatch; the never default guarantees completeness at compile time.
 export function renderComponent(
   node: ResolvedComponent,
-  ctx: RenderContext,
+  context: RenderContext,
 ): RenderResult {
   switch (node.type) {
     case 'Text':
-      return renderText(node, ctx);
+      return renderText(node, context);
     case 'Image':
-      return renderImage(node, ctx);
+      return renderImage(node, context);
     case 'Icon':
-      return renderIcon(node, ctx);
+      return renderIcon(node, context);
     case 'Video':
-      return renderVideo(node, ctx);
+      return renderVideo(node, context);
     case 'AudioPlayer':
-      return renderAudioPlayer(node, ctx);
+      return renderAudioPlayer(node, context);
     case 'Row':
-      return renderRow(node, ctx);
+      return renderRow(node, context);
     case 'Column':
-      return renderColumn(node, ctx);
+      return renderColumn(node, context);
     case 'List':
-      return renderList(node, ctx);
+      return renderList(node, context);
     case 'Card':
-      return renderCard(node, ctx);
+      return renderCard(node, context);
     case 'Tabs':
-      return renderTabs(node, ctx);
+      return renderTabs(node, context);
     case 'Modal':
-      return renderModal(node, ctx);
+      return renderModal(node, context);
     case 'Divider':
-      return renderDivider(node, ctx);
+      return renderDivider(node, context);
     case 'Button':
-      return renderButton(node, ctx);
+      return renderButton(node, context);
     case 'TextField':
-      return renderTextField(node, ctx);
+      return renderTextField(node, context);
     case 'CheckBox':
-      return renderCheckBox(node, ctx);
+      return renderCheckBox(node, context);
     case 'ChoicePicker':
-      return renderChoicePicker(node, ctx);
+      return renderChoicePicker(node, context);
     case 'Slider':
-      return renderSlider(node, ctx);
+      return renderSlider(node, context);
     case 'DateTimeInput':
-      return renderDateTimeInput(node, ctx);
+      return renderDateTimeInput(node, context);
     /* v8 ignore start -- unreachable: the never assignment makes a missing case a compile error. */
     default: {
       const _exhaustive: never = node;

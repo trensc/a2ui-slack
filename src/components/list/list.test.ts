@@ -38,7 +38,7 @@ describe('renderList', () => {
   });
 
   it('concatenates expanded child runs in order, merging degradations', () => {
-    const ctx = contextFrom({
+    const context = contextFrom({
       r1: { blocks: [section('row1')], degradations: [] },
       r2: {
         blocks: [section('row2')],
@@ -54,7 +54,7 @@ describe('renderList', () => {
     });
     const result = renderList(
       { type: 'List', id: 'list', childrenIds: ['r1', 'r2'] },
-      ctx,
+      context,
     );
     expect(result.blocks).toEqual([section('row1'), section('row2')]);
     expect(result.degradations).toEqual([

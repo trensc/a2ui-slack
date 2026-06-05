@@ -17,7 +17,7 @@ const DISABLED_NOTE = '⚠️ complete required fields';
 /**
  * Render an A2UI Button as an `actions` block with a single `button`.
  *
- * - `hasServerAction` → encode an `action_id` (surfaceId injected by ctx).
+ * - `hasServerAction` → encode an `action_id` (surfaceId injected by context).
  * - `url` → `button.url` (clipped to 3000); may coexist with an `action_id`.
  * - `variant 'primary'` → `style: 'primary'`; `'borderless'` has no equivalent.
  * - `disabled` → still render the button + a context note (Block Kit can't

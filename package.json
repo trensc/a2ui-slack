@@ -4,12 +4,21 @@
   "description": "Community A2UI renderer for Slack — maps A2UI surfaces to Slack Block Kit.",
   "type": "module",
   "license": "MIT",
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "author": "Clément Trens <clement.trens1@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trensc/a2ui-slack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/trensc/a2ui-slack/issues"
+  },
+  "homepage": "https://github.com/trensc/a2ui-slack#readme",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "files": [

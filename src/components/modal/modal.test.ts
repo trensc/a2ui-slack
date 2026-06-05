@@ -3,7 +3,7 @@ import type { RenderContext } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { renderModal } from './modal.js';
 
-const ctx: RenderContext = {
+const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
@@ -18,7 +18,7 @@ const node: ResolvedOf<'Modal'> = {
 
 describe('renderModal', () => {
   it('renders a single placeholder section block', () => {
-    const { blocks } = renderModal(node, ctx);
+    const { blocks } = renderModal(node, context);
     expect(blocks).toEqual([
       {
         type: 'section',
@@ -28,7 +28,7 @@ describe('renderModal', () => {
   });
 
   it('always emits exactly one dropped degradation report', () => {
-    const { degradations } = renderModal(node, ctx);
+    const { degradations } = renderModal(node, context);
     expect(degradations).toHaveLength(1);
     expect(degradations[0]).toEqual({
       componentId: 'modal-1',
@@ -41,7 +41,7 @@ describe('renderModal', () => {
   it('does not act on triggerId or contentId (no I/O, no renderChild)', () => {
     let renderChildCalls = 0;
     const spyCtx: RenderContext = {
-      ...ctx,
+      ...context,
       renderChild: () => {
         renderChildCalls += 1;
         return { blocks: [], degradations: [] };

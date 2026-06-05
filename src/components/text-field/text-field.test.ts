@@ -164,10 +164,26 @@ describe('renderTextField', () => {
     expect(degradations[1]?.reason).toContain('empty text field label');
   });
 
+  it('clamps the read-only composite (label + value) to 3000 chars', () => {
+    // A disabled field with a long label AND a long value: the section.text is
+    // the joined "*label*\nvalue", which must not exceed Slack's 3000-char cap
+    // or Slack rejects the whole message.
+    const { blocks } = renderTextField(
+      node({ disabled: true, label: 'L'.repeat(2000), value: 'V'.repeat(2000) }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'section' || block.text?.type !== 'mrkdwn') {
+      throw new Error('expected section');
+    }
+    expect(block.text.text).toHaveLength(3000);
+    expect(block.text.text.endsWith('…')).toBe(true);
+  });
+
   it('round-trips a path with special chars through the real codec', () => {
     const path = '/items/0/text~1weird|stuff';
     let registry = emptyRegistry;
-    const ctx: RenderContext = {
+    const context: RenderContext = {
       renderChild: () => ({ blocks: [], degradations: [] }),
       encodeActionId: (ref) => {
         const full: ActionIdRef = { ...ref, surfaceId: 's1' };
@@ -177,7 +193,7 @@ describe('renderTextField', () => {
       },
       surfaceKind: 'message',
     };
-    const { blocks } = renderTextField(node({ path }), ctx);
+    const { blocks } = renderTextField(node({ path }), context);
     const [block] = blocks;
     if (block?.type !== 'input') throw new Error('expected input block');
     const decoded = decodeActionId(block.block_id ?? '', registry);
