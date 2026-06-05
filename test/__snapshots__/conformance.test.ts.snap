@@ -1,0 +1,404 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`conformance: golden fixtures > form > renders without throwing and matches its Block Kit golden > blocks 1`] = `
+[
+  {
+    "block_id": "t|0",
+    "element": {
+      "action_id": "t|0",
+      "initial_value": "Ada",
+      "type": "plain_text_input",
+    },
+    "label": {
+      "text": "Name",
+      "type": "plain_text",
+    },
+    "type": "input",
+  },
+  {
+    "block_id": "t|1",
+    "element": {
+      "action_id": "t|1",
+      "options": [
+        {
+          "text": {
+            "text": "I agree",
+            "type": "plain_text",
+          },
+          "value": "true",
+        },
+      ],
+      "type": "checkboxes",
+    },
+    "label": {
+      "text": "I agree",
+      "type": "plain_text",
+    },
+    "optional": true,
+    "type": "input",
+  },
+  {
+    "block_id": "t|2",
+    "element": {
+      "action_id": "t|2",
+      "initial_option": {
+        "text": {
+          "text": "Pro",
+          "type": "plain_text",
+        },
+        "value": "pro",
+      },
+      "options": [
+        {
+          "text": {
+            "text": "Free",
+            "type": "plain_text",
+          },
+          "value": "free",
+        },
+        {
+          "text": {
+            "text": "Pro",
+            "type": "plain_text",
+          },
+          "value": "pro",
+        },
+      ],
+      "type": "radio_buttons",
+    },
+    "label": {
+      "text": "Select an option",
+      "type": "plain_text",
+    },
+    "optional": true,
+    "type": "input",
+  },
+  {
+    "block_id": "t|3",
+    "element": {
+      "action_id": "t|3",
+      "initial_option": {
+        "text": {
+          "text": "4",
+          "type": "plain_text",
+        },
+        "value": "4",
+      },
+      "options": [
+        {
+          "text": {
+            "text": "0",
+            "type": "plain_text",
+          },
+          "value": "0",
+        },
+        {
+          "text": {
+            "text": "1",
+            "type": "plain_text",
+          },
+          "value": "1",
+        },
+        {
+          "text": {
+            "text": "2",
+            "type": "plain_text",
+          },
+          "value": "2",
+        },
+        {
+          "text": {
+            "text": "3",
+            "type": "plain_text",
+          },
+          "value": "3",
+        },
+        {
+          "text": {
+            "text": "4",
+            "type": "plain_text",
+          },
+          "value": "4",
+        },
+        {
+          "text": {
+            "text": "5",
+            "type": "plain_text",
+          },
+          "value": "5",
+        },
+        {
+          "text": {
+            "text": "6",
+            "type": "plain_text",
+          },
+          "value": "6",
+        },
+        {
+          "text": {
+            "text": "7",
+            "type": "plain_text",
+          },
+          "value": "7",
+        },
+        {
+          "text": {
+            "text": "8",
+            "type": "plain_text",
+          },
+          "value": "8",
+        },
+        {
+          "text": {
+            "text": "9",
+            "type": "plain_text",
+          },
+          "value": "9",
+        },
+        {
+          "text": {
+            "text": "10",
+            "type": "plain_text",
+          },
+          "value": "10",
+        },
+      ],
+      "type": "static_select",
+    },
+    "label": {
+      "text": "Value (0–10)",
+      "type": "plain_text",
+    },
+    "optional": true,
+    "type": "input",
+  },
+  {
+    "block_id": "t|4",
+    "element": {
+      "action_id": "t|4",
+      "initial_date": "2026-06-06",
+      "type": "datepicker",
+    },
+    "label": {
+      "text": "Date",
+      "type": "plain_text",
+    },
+    "optional": true,
+    "type": "input",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > form > renders without throwing and matches its Block Kit golden > degradations 1`] = `
+[
+  {
+    "componentId": "vol",
+    "componentType": "Slider",
+    "fidelity": "partial",
+    "reason": "no Block Kit slider; rendered as a stepped select",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > form > renders without throwing and matches its Block Kit golden > notices 1`] = `[]`;
+
+exports[`conformance: golden fixtures > list-of-cards > renders without throwing and matches its Block Kit golden > blocks 1`] = `
+[
+  {
+    "type": "divider",
+  },
+  {
+    "text": {
+      "text": "First",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "text": {
+      "text": "Second",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+  {
+    "type": "divider",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > list-of-cards > renders without throwing and matches its Block Kit golden > degradations 1`] = `
+[
+  {
+    "componentId": "root#0",
+    "componentType": "Card",
+    "fidelity": "partial",
+    "reason": "no container styling",
+  },
+  {
+    "componentId": "root#1",
+    "componentType": "Card",
+    "fidelity": "partial",
+    "reason": "no container styling",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > list-of-cards > renders without throwing and matches its Block Kit golden > notices 1`] = `[]`;
+
+exports[`conformance: golden fixtures > media > renders without throwing and matches its Block Kit golden > blocks 1`] = `
+[
+  {
+    "text": {
+      "text": "<https://v/clip.mp4|demo clip>",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+  {
+    "text": {
+      "text": "<https://a/track.mp3|theme>",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+  {
+    "text": {
+      "text": "\`Icon\` not supported",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > media > renders without throwing and matches its Block Kit golden > degradations 1`] = `
+[
+  {
+    "componentId": "vid",
+    "componentType": "Video",
+    "fidelity": "partial",
+    "reason": "no native video block in Block Kit",
+  },
+  {
+    "componentId": "aud",
+    "componentType": "AudioPlayer",
+    "fidelity": "partial",
+    "reason": "no native audio block in Block Kit",
+  },
+  {
+    "componentId": "ico",
+    "componentType": "Icon",
+    "fidelity": "dropped",
+    "reason": "unknown icon name: rocket",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > media > renders without throwing and matches its Block Kit golden > notices 1`] = `[]`;
+
+exports[`conformance: golden fixtures > rich-message > renders without throwing and matches its Block Kit golden > blocks 1`] = `
+[
+  {
+    "text": {
+      "text": "Release 1.0",
+      "type": "plain_text",
+    },
+    "type": "header",
+  },
+  {
+    "alt_text": "cover art",
+    "image_url": "https://img/c.png",
+    "type": "image",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "fields": [
+      {
+        "text": "Author",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "Ada",
+        "type": "mrkdwn",
+      },
+    ],
+    "type": "section",
+  },
+  {
+    "elements": [
+      {
+        "action_id": "t|0",
+        "style": "primary",
+        "text": {
+          "text": "Ship it",
+          "type": "plain_text",
+        },
+        "type": "button",
+      },
+    ],
+    "type": "actions",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > rich-message > renders without throwing and matches its Block Kit golden > degradations 1`] = `[]`;
+
+exports[`conformance: golden fixtures > rich-message > renders without throwing and matches its Block Kit golden > notices 1`] = `[]`;
+
+exports[`conformance: golden fixtures > tabs > renders without throwing and matches its Block Kit golden > blocks 1`] = `
+[
+  {
+    "elements": [
+      {
+        "action_id": "t|0#0",
+        "style": "primary",
+        "text": {
+          "text": "Overview",
+          "type": "plain_text",
+        },
+        "type": "button",
+        "value": "0",
+      },
+      {
+        "action_id": "t|0#1",
+        "text": {
+          "text": "Details",
+          "type": "plain_text",
+        },
+        "type": "button",
+        "value": "1",
+      },
+    ],
+    "type": "actions",
+  },
+  {
+    "text": {
+      "text": "Overview body",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > tabs > renders without throwing and matches its Block Kit golden > degradations 1`] = `
+[
+  {
+    "componentId": "root",
+    "componentType": "Tabs",
+    "fidelity": "partial",
+    "reason": "tabs emulated via switch + re-render",
+  },
+]
+`;
+
+exports[`conformance: golden fixtures > tabs > renders without throwing and matches its Block Kit golden > notices 1`] = `[]`;
