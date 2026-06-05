@@ -38,10 +38,24 @@ processor.processMessages([
       components: [
         { component: 'Column', id: 'root', children: ['hi', 'list', 'field', 'add'] },
         { component: 'Text', id: 'hi', text: { path: '/user/name' }, variant: 'h1' },
-        { component: 'List', id: 'list', children: { componentId: 'todoTmpl', path: '/todos' } },
+        {
+          component: 'List',
+          id: 'list',
+          children: { componentId: 'todoTmpl', path: '/todos' },
+        },
         { component: 'Text', id: 'todoTmpl', text: { path: 'label' } },
-        { component: 'TextField', id: 'field', label: 'New todo', value: { path: '/newTodo' } },
-        { component: 'Button', id: 'add', child: 'addLabel', action: { event: { name: 'addTodo' } } },
+        {
+          component: 'TextField',
+          id: 'field',
+          label: 'New todo',
+          value: { path: '/newTodo' },
+        },
+        {
+          component: 'Button',
+          id: 'add',
+          child: 'addLabel',
+          action: { event: { name: 'addTodo' } },
+        },
         { component: 'Text', id: 'addLabel', text: 'Add' },
       ],
     },

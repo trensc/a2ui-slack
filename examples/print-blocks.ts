@@ -16,7 +16,11 @@ import {
 } from '../src/index.js';
 
 const nodes: ResolvedComponent[] = [
-  { type: 'Column', id: 'root', childrenIds: ['title', 'intro', 'name', 'agree', 'submit'] },
+  {
+    type: 'Column',
+    id: 'root',
+    childrenIds: ['title', 'intro', 'name', 'agree', 'submit'],
+  },
   { type: 'Text', id: 'title', text: 'Hello from A2UI', variant: 'h1' },
   {
     type: 'Text',
@@ -32,7 +36,13 @@ const nodes: ResolvedComponent[] = [
     multiline: false,
     disabled: false,
   },
-  { type: 'CheckBox', id: 'agree', label: 'I agree to the terms', checked: false, path: '/agree' },
+  {
+    type: 'CheckBox',
+    id: 'agree',
+    label: 'I agree to the terms',
+    checked: false,
+    path: '/agree',
+  },
   {
     type: 'Button',
     id: 'submit',
