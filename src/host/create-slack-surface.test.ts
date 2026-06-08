@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
+import type { ActionsBlock } from '@slack/types';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import type { SlackInteractionPayload } from '../actions/interpret-payload.js';
 import type { RegistryStore } from './registry-store.js';
@@ -97,11 +98,18 @@ describe('createSlackSurface.render', () => {
 describe('createSlackSurface.inbound', () => {
   it('decodes a click on a button rendered earlier (full registry round-trip)', async () => {
     const surface = createSlackSurface();
-    await surface.render('s1', MESSAGES);
-    // The button is the only encoded ref, so its action_id is deterministically 't|0'.
+    // Read the action_id back from the rendered blocks instead of assuming an ordinal.
+    const { blocks } = await surface.render('s1', MESSAGES);
+    const actionsBlock = blocks.find(
+      (b): b is ActionsBlock => b.type === 'actions',
+    );
+    const firstElement = actionsBlock?.elements[0];
+    const actionId: string | undefined =
+      firstElement && 'action_id' in firstElement ? firstElement.action_id : undefined;
+    expect(actionId).toBeTypeOf('string');
     const payload: SlackInteractionPayload = {
       type: 'block_actions',
-      actions: [{ type: 'button', action_id: 't|0' }],
+      actions: [{ type: 'button', action_id: actionId ?? '' }],
     };
     const effects = await surface.inbound('s1', payload);
     expect(effects).toEqual([
@@ -113,7 +121,7 @@ describe('createSlackSurface.inbound', () => {
     const surface = createSlackSurface();
     const payload: SlackInteractionPayload = {
       type: 'block_actions',
-      actions: [{ type: 'button', action_id: 't|0' }],
+      actions: [{ type: 'button', action_id: 'UNKNOWN' }],
     };
     expect(await surface.inbound('never-rendered', payload)).toEqual([]);
   });
