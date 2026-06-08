@@ -58,16 +58,37 @@ describe('createSlackSurface.render', () => {
     expect(store.getKeys).toEqual(['s1', 's1']);
   });
 
-  it('namespaces the store key with keyPrefix and honors a custom catalogId', async () => {
+  it('namespaces the store key with keyPrefix', async () => {
     const store = new RecordingStore();
     const surface = createSlackSurface({ store, keyPrefix: 'team1:', catalogId: 'a2ui-slack' });
     await surface.render('s1', MESSAGES);
     expect(store.setKeys).toEqual(['team1:s1']);
   });
 
-  it('defaults surfaceKind to message but accepts an explicit kind', async () => {
+  it('accepts an explicit surfaceKind', async () => {
     const surface = createSlackSurface();
     const asModal = await surface.render('s1', MESSAGES, 'modal');
     expect(asModal.blocks.length).toBeGreaterThan(0);
+  });
+
+  it('registers the catalog under the custom catalogId so messages that reference it resolve correctly', async () => {
+    const customMessages: A2uiMessage[] = [
+      { version: 'v0.9', createSurface: { surfaceId: 's2', catalogId: 'custom-cat' } },
+      {
+        version: 'v0.9',
+        updateComponents: {
+          surfaceId: 's2',
+          components: [
+            { component: 'Column', id: 'root', children: ['btn'] },
+            { component: 'Button', id: 'btn', child: 'lbl', action: { event: { name: 'go' } } },
+            { component: 'Text', id: 'lbl', text: 'Go' },
+          ],
+        },
+      },
+    ];
+    const surface = createSlackSurface({ catalogId: 'custom-cat' });
+    const { blocks } = await surface.render('s2', customMessages);
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(blocks).toContainEqual(expect.objectContaining({ type: 'actions' }));
   });
 });
