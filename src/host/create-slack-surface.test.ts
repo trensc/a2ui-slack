@@ -53,7 +53,9 @@ describe('createSlackSurface.render', () => {
 
   it('throws a clear error when the surface was never created', async () => {
     const surface = createSlackSurface();
-    await expect(surface.render('ghost', [])).rejects.toThrow(/ghost/);
+    await expect(surface.render('ghost', [])).rejects.toThrow(
+      /ghost.*createSurface message first/s,
+    );
   });
 
   it('persists the grown registry under the surface key and reuses it on re-render', async () => {

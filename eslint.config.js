@@ -82,6 +82,6 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', 'examples/', 'coverage/'],
+    ignores: ['dist/', 'node_modules/', 'examples/', 'coverage/', '.stryker-tmp/'],
   },
 ];
