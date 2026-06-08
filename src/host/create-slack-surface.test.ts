@@ -15,7 +15,12 @@ const MESSAGES: A2uiMessage[] = [
       surfaceId: 's1',
       components: [
         { component: 'Column', id: 'root', children: ['btn'] },
-        { component: 'Button', id: 'btn', child: 'lbl', action: { event: { name: 'go' } } },
+        {
+          component: 'Button',
+          id: 'btn',
+          child: 'lbl',
+          action: { event: { name: 'go' } },
+        },
         { component: 'Text', id: 'lbl', text: 'Go' },
       ],
     },
@@ -62,7 +67,11 @@ describe('createSlackSurface.render', () => {
 
   it('namespaces the store key with keyPrefix', async () => {
     const store = new RecordingStore();
-    const surface = createSlackSurface({ store, keyPrefix: 'team1:', catalogId: 'a2ui-slack' });
+    const surface = createSlackSurface({
+      store,
+      keyPrefix: 'team1:',
+      catalogId: 'a2ui-slack',
+    });
     await surface.render('s1', MESSAGES);
     expect(store.setKeys).toEqual(['team1:s1']);
   });
@@ -82,7 +91,12 @@ describe('createSlackSurface.render', () => {
           surfaceId: 's2',
           components: [
             { component: 'Column', id: 'root', children: ['btn'] },
-            { component: 'Button', id: 'btn', child: 'lbl', action: { event: { name: 'go' } } },
+            {
+              component: 'Button',
+              id: 'btn',
+              child: 'lbl',
+              action: { event: { name: 'go' } },
+            },
             { component: 'Text', id: 'lbl', text: 'Go' },
           ],
         },
@@ -100,9 +114,7 @@ describe('createSlackSurface.inbound', () => {
     const surface = createSlackSurface();
     // Read the action_id back from the rendered blocks instead of assuming an ordinal.
     const { blocks } = await surface.render('s1', MESSAGES);
-    const actionsBlock = blocks.find(
-      (b): b is ActionsBlock => b.type === 'actions',
-    );
+    const actionsBlock = blocks.find((b): b is ActionsBlock => b.type === 'actions');
     const firstElement = actionsBlock?.elements[0];
     const actionId: string | undefined =
       firstElement && 'action_id' in firstElement ? firstElement.action_id : undefined;
