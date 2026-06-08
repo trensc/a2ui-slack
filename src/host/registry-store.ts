@@ -8,7 +8,7 @@ import type { TokenRegistry } from '../action-id/action-id.js';
  * adapters drop in without an API change.
  */
 export interface RegistryStore {
-  /** Load the registry for `key`, or `undefined` if this surface is new. */
+  /** Load the registry for `key`, or `undefined` if nothing is stored for it. */
   get(key: string): Promise<TokenRegistry | undefined>;
   /** Persist the (grown) registry for `key`. */
   set(key: string, registry: TokenRegistry): Promise<void>;

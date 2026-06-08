@@ -18,9 +18,10 @@ describe('InMemoryRegistryStore', () => {
     expect(await store.get('s1')).toBe(registry);
   });
 
-  it('keeps keys independent', async () => {
+  it('reads back the stored key and returns undefined for others', async () => {
     const store = new InMemoryRegistryStore();
     await store.set('s1', emptyRegistry);
     expect(await store.get('s2')).toBeUndefined();
+    expect(await store.get('s1')).toBe(emptyRegistry);
   });
 });
