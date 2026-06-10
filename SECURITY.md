@@ -23,9 +23,12 @@ triage as time allows.
 
 ## Scope
 
-a2ui-slack is a **pure rendering library**. It produces Slack Block Kit JSON from
-A2UI surfaces and parses Slack interaction payloads. The core performs no I/O: no
-network, no filesystem, no transport, no auth, no secret handling.
+a2ui-slack is a **rendering library that performs no I/O**: no network, no
+filesystem, no transport, no auth, no secret handling. It produces Slack Block
+Kit JSON from A2UI surfaces and parses Slack interaction payloads. The
+`a2ui-slack/host` facade holds per-surface state, in memory by default; if you
+plug in a custom `RegistryStore`, that store's I/O and its security are your
+code and your responsibility.
 
 Because of that, **consumers are responsible for transport, authentication, and
 secret handling** - verifying Slack request signatures, managing tokens, and
