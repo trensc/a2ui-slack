@@ -82,6 +82,11 @@ export default [
     },
   },
   {
+    // Config files sit outside the tsconfig project; type-aware rules can't see them.
+    files: ['**/*.config.js', '**/*.config.ts'],
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
     ignores: ['dist/', 'node_modules/', 'examples/', 'coverage/', '.stryker-tmp/'],
   },
 ];
