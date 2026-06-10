@@ -1,8 +1,9 @@
 # Contributing to a2ui-slack
 
-Thanks for your interest. This is a pure, decoupled A2UI → Slack Block Kit
-renderer held to a strict quality gate. Contributions are welcome as long as they
-clear that gate.
+Thanks for your interest. This is a decoupled A2UI → Slack Block Kit renderer
+held to a strict quality gate: a pure core (data in, data out) plus a thin
+stateful facade in `src/host/` — stateful, but still I/O-free. Contributions are
+welcome as long as they clear that gate.
 
 ## Prerequisites
 
