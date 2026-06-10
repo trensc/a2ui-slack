@@ -1,5 +1,11 @@
 # a2ui-slack
 
+[![npm](https://img.shields.io/npm/v/a2ui-slack)](https://www.npmjs.com/package/a2ui-slack)
+[![CI](https://github.com/trensc/a2ui-slack/actions/workflows/ci.yml/badge.svg)](https://github.com/trensc/a2ui-slack/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/trensc/a2ui-slack/badge)](https://scorecard.dev/viewer/?uri=github.com/trensc/a2ui-slack)
+[![npm downloads](https://img.shields.io/npm/dm/a2ui-slack)](https://www.npmjs.com/package/a2ui-slack)
+![node](https://img.shields.io/node/v/a2ui-slack)
+
 > Render [A2UI](https://github.com/google/A2UI) surfaces as native [Slack Block Kit](https://api.slack.com/block-kit).
 
 Your agent already speaks A2UI — a declarative, framework-agnostic UI protocol. `a2ui-slack` turns those surfaces into rich, interactive Slack messages, so **your agent never has to learn Block Kit**.
