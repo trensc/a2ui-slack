@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Keeps the SHA-pinned actions in workflows up to date (PRs bump pin + comment).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+    # One PR per week for dev-dep minor/patch noise; prod deps stay individual.
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
