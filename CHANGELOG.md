@@ -17,6 +17,9 @@ Initial renderer foundation targeting A2UI spec v0.9.
   component: Text, Image, Icon, Video, AudioPlayer, Divider, Row, Column, List,
   Card, Tabs, Modal, Button, TextField, CheckBox, ChoicePicker, Slider,
   DateTimeInput. Exhaustive component dispatch with a fallback helper.
+- **Stateful host facade** - `a2ui-slack/host` subpath: `createSlackSurface`
+  (render + inbound in one object) and a `RegistryStore` port with an
+  `InMemoryRegistryStore` default for pluggable persistence.
 - **Surface assembly** - `resolveSurface` (web_core binder), `resolveTree`,
   `assembleSurface` (resolved tree → Block Kit blocks), and `buildCapabilities`
   (reduced v0.9 catalog, omits Modal).
