@@ -136,7 +136,7 @@ import type { RegistryStore } from 'a2ui-slack/host';
 
 ## What renders
 
-`a2ui-slack` covers the A2UI **basic catalog** — text, images, icons, buttons, inputs (text / checkbox / choice / slider / date-time), layout (row / column / list / card / tabs), dividers, and modals. Components Slack can't represent degrade gracefully rather than failing the whole message; `render()` returns `degradations` and `notices` if you want to inspect or log fidelity losses.
+`a2ui-slack` covers the A2UI **basic catalog** — text, images, icons, buttons, inputs (text / checkbox / choice / slider / date-time), layout (row / column / list / card / tabs), and dividers. The one exception is `Modal`: it has no Slack message-surface equivalent, so the advertised catalog omits it and a well-behaved agent never emits it. Components Slack can't represent degrade gracefully rather than failing the whole message; `render()` returns `degradations` and `notices` if you want to inspect or log fidelity losses.
 
 ```ts
 const { blocks, degradations, notices } = await surface.render(surfaceId, messages);
