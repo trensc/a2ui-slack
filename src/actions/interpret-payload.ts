@@ -4,6 +4,8 @@ import type { InboundEffect } from './inbound-effect.js';
 import { extractValue } from './internal/extract-value.js';
 import type { InboundElement } from './internal/extract-value.js';
 
+export type { InboundElement } from './internal/extract-value.js';
+
 /** A `block_actions` payload: discrete element interactions in a message. */
 export interface BlockActionsPayload {
   readonly type: 'block_actions';
