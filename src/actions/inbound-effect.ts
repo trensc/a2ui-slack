@@ -29,4 +29,6 @@ export type InboundEffect =
       readonly kind: 'fireAction';
       readonly surfaceId: string;
       readonly componentId: string;
+      /** Resolved A2UI action value (custom multi-action). Absent for single-action built-ins. */
+      readonly action?: string;
     };

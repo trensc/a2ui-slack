@@ -21,4 +21,8 @@ export interface ActionIdRef {
   readonly componentId: string;
   /** JSON Pointer to write — required when `kind === 'input'`. */
   readonly path?: string;
+  /** Resolved A2UI action value; disambiguates multi-action custom components. */
+  readonly action?: string;
+  /** Set for custom-component callbacks so inbound can find a per-param extractor. */
+  readonly custom?: { readonly component: string; readonly param: string };
 }

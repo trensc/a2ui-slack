@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { emptyRegistry, encodeActionId } from '../action-id/action-id.js';
 import type { ActionIdRef } from '../action-id/action-id-ref.js';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import { interpretPayload } from './interpret-payload.js';
+import { buildCustomRegistry } from '../components/custom/custom-component.js';
 
 /** Encode refs into a registry; `id(i)` returns the i-th token id (always a string). */
 function tokens(refs: ActionIdRef[]): {
@@ -134,6 +136,71 @@ describe('interpretPayload — block_actions', () => {
     expect(effects).toEqual([
       { kind: 'setData', surfaceId: 's1', path: '/items/0/name~weird|x', value: 'v' },
     ]);
+  });
+});
+
+describe('custom-aware inbound', () => {
+  it('copies the action value onto the fireAction effect', () => {
+    const enc = encodeActionId(
+      { kind: 'action', surfaceId: 's', componentId: 'c', action: 'approve' },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      { type: 'block_actions', actions: [{ type: 'button', action_id: enc.id }] },
+      enc.registry,
+    );
+    expect(effects).toEqual([{ kind: 'fireAction', surfaceId: 's', componentId: 'c', action: 'approve' }]);
+  });
+
+  it('uses the per-param custom extractor for setData', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'RangePicker',
+        schema: z.object({ range: z.unknown() }),
+        inputs: { range: { extract: (el) => (el.value ?? '').split('-') } },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/r',
+        custom: { component: 'RangePicker', param: 'range' },
+      },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      { type: 'block_actions', actions: [{ type: 'custom_range', action_id: enc.id, value: '1-9' }] },
+      enc.registry,
+      custom,
+    );
+    expect(effects).toEqual([{ kind: 'setData', surfaceId: 's', path: '/r', value: ['1', '9'] }]);
+  });
+
+  it('skips setData when the input ref has an empty path (no {path} binding)', () => {
+    const enc = encodeActionId(
+      { kind: 'input', surfaceId: 's', componentId: 'c', path: '' },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      { type: 'block_actions', actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }] },
+      enc.registry,
+    );
+    expect(effects).toEqual([]); // empty pointer → no write-back, never writes the model root
+  });
+
+  it('skips setData when the input ref has no path at all (covers the `=== undefined` disjunct)', () => {
+    const enc = encodeActionId(
+      { kind: 'input', surfaceId: 's', componentId: 'c' }, // path omitted
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      { type: 'block_actions', actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }] },
+      enc.registry,
+    );
+    expect(effects).toEqual([]);
   });
 });
 
