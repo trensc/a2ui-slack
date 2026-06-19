@@ -1,5 +1,6 @@
 import type { RenderContext, RenderResult } from './render-context.js';
 import type { ResolvedComponent } from './resolved-component.js';
+import { fallbackResult } from './fallback.js';
 import { renderText } from './text/text.js';
 import { renderImage } from './image/image.js';
 import { renderIcon } from './icon/icon.js';
@@ -25,7 +26,7 @@ import { renderDateTimeInput } from './date-time-input/date-time-input.js';
  * error, so this file is the one place the component set is enforced — and the
  * one file no component task edits (no merge conflicts on the fan-out).
  */
-// eslint-disable-next-line complexity -- exhaustive 18-way dispatch; the never default guarantees completeness at compile time.
+// eslint-disable-next-line complexity -- exhaustive 19-way dispatch; the never default guarantees completeness at compile time.
 export function renderComponent(
   node: ResolvedComponent,
   context: RenderContext,
@@ -67,6 +68,9 @@ export function renderComponent(
       return renderSlider(node, context);
     case 'DateTimeInput':
       return renderDateTimeInput(node, context);
+    case 'Custom':
+      // Placeholder — Task 4 swaps this for `renderCustom(node, context)`.
+      return fallbackResult(node, 'custom component rendering not yet wired');
     /* v8 ignore start -- unreachable: the never assignment makes a missing case a compile error. */
     default: {
       const _exhaustive: never = node;

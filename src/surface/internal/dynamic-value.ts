@@ -27,8 +27,8 @@ export function writeBackPath(basePath: string, rawValue: unknown): string {
   return binding ? resolveDataPath(basePath, binding.path) : '';
 }
 
-/** Resolve a raw dynamic value against a context, defaulting `undefined`/`null`. */
-function resolve(context: DataContext, raw: unknown): unknown {
+/** Resolve a raw dynamic value against a context, defaulting `undefined`/`null` to `undefined`. */
+export function resolveValue(context: DataContext, raw: unknown): unknown {
   if (raw === undefined || raw === null) return undefined;
   // `resolveDynamicValue<unknown>` keeps the result `unknown`; we coerce below.
   return context.resolveDynamicValue<unknown>(raw as never);
@@ -48,7 +48,7 @@ function stringify(value: unknown): string {
 
 /** Resolve to a string, defaulting to `fallback` when absent. */
 export function resolveString(context: DataContext, raw: unknown, fallback = ''): string {
-  const value = resolve(context, raw);
+  const value = resolveValue(context, raw);
   return value === undefined ? fallback : stringify(value);
 }
 
@@ -58,7 +58,7 @@ export function resolveNumber(
   raw: unknown,
   fallback: number,
 ): number {
-  const value = resolve(context, raw);
+  const value = resolveValue(context, raw);
   if (value === undefined) return fallback;
   const coerced = Number(value);
   return Number.isNaN(coerced) ? fallback : coerced;
@@ -66,12 +66,12 @@ export function resolveNumber(
 
 /** Resolve to a boolean (JS truthiness of the resolved value). */
 export function resolveBoolean(context: DataContext, raw: unknown): boolean {
-  return Boolean(resolve(context, raw));
+  return Boolean(resolveValue(context, raw));
 }
 
 /** Resolve to a string array; non-arrays become a single-element or empty list. */
 export function resolveStringList(context: DataContext, raw: unknown): readonly string[] {
-  const value = resolve(context, raw);
+  const value = resolveValue(context, raw);
   if (value === undefined) return [];
   if (Array.isArray(value)) return value.map((entry: unknown) => stringify(entry));
   return [stringify(value)];
@@ -79,6 +79,6 @@ export function resolveStringList(context: DataContext, raw: unknown): readonly 
 
 /** Resolve a raw value to an unknown array (for templates / option lists). */
 export function resolveArray(context: DataContext, raw: unknown): readonly unknown[] {
-  const value = resolve(context, raw);
+  const value = resolveValue(context, raw);
   return Array.isArray(value) ? value : [];
 }

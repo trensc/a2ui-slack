@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ComponentType, ResolvedComponent } from './resolved-component.js';
 import type { ComponentRenderer, RenderContext } from './render-context.js';
+import { fallbackResult } from './fallback.js';
 import { renderComponent } from './render-component.js';
 import { renderText } from './text/text.js';
 import { renderImage } from './image/image.js';
@@ -112,6 +113,10 @@ const cases: { [T in ComponentType]: Case<T> } = {
     node: { type: 'DateTimeInput', id: 'id', path: '/p', mode: 'date' },
     renderer: renderDateTimeInput,
   },
+  Custom: {
+    node: { type: 'Custom', id: 'id', name: 'MyCard', props: {}, actions: {}, inputs: {} },
+    renderer: (node) => fallbackResult(node, 'custom component rendering not yet wired'),
+  },
 };
 
 describe('renderComponent', () => {
@@ -125,7 +130,7 @@ describe('renderComponent', () => {
     },
   );
 
-  it('handles all 18 component types', () => {
-    expect(entries).toHaveLength(18);
+  it('handles all 19 component types', () => {
+    expect(entries).toHaveLength(19);
   });
 });

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { Catalog, MessageProcessor, type SurfaceModel } from '@a2ui/web_core/v0_9';
+import { z } from 'zod';
+import { Catalog, MessageProcessor, type A2uiMessage, type SurfaceModel } from '@a2ui/web_core/v0_9';
 import { BASIC_COMPONENTS } from '@a2ui/web_core/v0_9/basic_catalog';
 import type { ResolvedComponent } from '../components/resolved-component.js';
+import {
+  buildCustomRegistry,
+  toComponentApi,
+} from '../components/custom/custom-component.js';
 import { resolveSurface } from './resolve-surface.js';
 
 type RawComponent = Record<string, unknown> & { id: string; component: string };
@@ -586,5 +591,199 @@ describe('resolveSurface', () => {
     ]);
     expect(byId.get('root#0')).toMatchObject({ value: 'Ada', path: '/rows/0/name' });
     expect(byId.get('root#1')).toMatchObject({ value: 'Bo', path: '/rows/1/name' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Helper for custom-component tests: process raw A2UI messages with a registry
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a real web_core SurfaceModel from a raw message sequence.
+ * The catalog id used in createSurface MUST match the one registered here ('a2ui-slack').
+ * Any custom components in `customRegistry` are added to the catalog so web_core
+ * accepts their types in updateComponents messages.
+ */
+function surfaceFrom(
+  messages: A2uiMessage[],
+  customRegistry = buildCustomRegistry([]),
+): SurfaceModel {
+  const customApis = [...customRegistry.values()].map(toComponentApi);
+  const processor = new MessageProcessor([
+    new Catalog('a2ui-slack', [...BASIC_COMPONENTS, ...customApis]),
+  ]);
+  processor.processMessages(messages);
+  const surfaceId = messages
+    .map((m) => ('createSurface' in m ? m.createSurface.surfaceId : undefined))
+    .find((id) => id !== undefined);
+  if (surfaceId === undefined) throw new Error('no createSurface message found');
+  const surface = processor.model.getSurface(surfaceId);
+  if (surface === undefined) throw new Error('surface not created');
+  return surface;
+}
+
+// ---------------------------------------------------------------------------
+// Custom component resolution
+// ---------------------------------------------------------------------------
+
+describe('custom component resolution', () => {
+  const registry = buildCustomRegistry([
+    {
+      name: 'ApprovalCard',
+      schema: z.object({
+        title: z.string().optional(),
+        onApprove: z.unknown().optional(),
+        comment: z.unknown().optional(),
+      }),
+      actions: ['onApprove'],
+      inputs: { comment: {} },
+      render: () => [],
+    },
+  ]);
+
+  it('emits a Custom node with resolved props, actions, and input paths', () => {
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [
+              {
+                id: 'root',
+                component: 'ApprovalCard',
+                title: 'Deploy?',
+                onApprove: { action: 'deploy' },
+                comment: { path: '/note' },
+              },
+            ],
+          },
+        },
+      ],
+      registry,
+    );
+    const tree = resolveSurface(surface, registry);
+    const node = tree.byId.get('root');
+    expect(node).toMatchObject({ type: 'Custom', name: 'ApprovalCard' });
+    if (node?.type !== 'Custom') throw new Error('expected Custom');
+    expect(node.props['title']).toBe('Deploy?');
+    expect(node.actions['onApprove']).toBe('deploy');
+    expect(node.inputs['comment']).toBe('/note');
+  });
+
+  it('falls back to unsupported Text for an unregistered type', () => {
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [{ id: 'root', component: 'Unknownz' }],
+          },
+        },
+      ],
+    );
+    const node = resolveSurface(surface, registry).byId.get('root');
+    expect(node).toEqual({ type: 'Text', id: 'root', text: '⚠️ unsupported component: Unknownz' });
+  });
+
+  it('treats an action prop with no {action:…} shape as a plain prop', () => {
+    // onApprove is declared as an action, but the agent supplied a non-action literal.
+    // classifyProp falls through to the 'prop' slot.
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [
+              { id: 'root', component: 'ApprovalCard', onApprove: 'not-an-action' },
+            ],
+          },
+        },
+      ],
+      registry,
+    );
+    const node = resolveSurface(surface, registry).byId.get('root');
+    if (node?.type !== 'Custom') throw new Error('expected Custom');
+    // onApprove was not {action:…} so it lands in props, not actions.
+    expect(node.actions['onApprove']).toBeUndefined();
+    expect(node.props['onApprove']).toBe('not-an-action');
+  });
+
+  it('treats a null action prop as a plain prop (asAction null branch)', () => {
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [
+              { id: 'root', component: 'ApprovalCard', onApprove: null },
+            ],
+          },
+        },
+      ],
+      registry,
+    );
+    const node = resolveSurface(surface, registry).byId.get('root');
+    if (node?.type !== 'Custom') throw new Error('expected Custom');
+    expect(node.actions['onApprove']).toBeUndefined();
+  });
+
+  it('resolves a custom component with no actions or inputs declared (nullish coalescing fallback)', () => {
+    // Component has no `actions` or `inputs` fields — exercises the ?? [] / ?? {} branches.
+    const minimalRegistry = buildCustomRegistry([
+      {
+        name: 'MinimalCard',
+        schema: z.object({ title: z.string().optional() }),
+        render: () => [],
+        // actions and inputs intentionally absent
+      },
+    ]);
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [{ id: 'root', component: 'MinimalCard', title: 'Hi' }],
+          },
+        },
+      ],
+      minimalRegistry,
+    );
+    const node = resolveSurface(surface, minimalRegistry).byId.get('root');
+    if (node?.type !== 'Custom') throw new Error('expected Custom');
+    expect(node.name).toBe('MinimalCard');
+    expect(node.props['title']).toBe('Hi');
+  });
+
+  it('treats an action prop whose {action} value is non-string as a plain prop', () => {
+    // Exercises the false branch of `typeof candidate === 'string'` in asAction.
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [
+              { id: 'root', component: 'ApprovalCard', onApprove: { action: 42 } },
+            ],
+          },
+        },
+      ],
+      registry,
+    );
+    const node = resolveSurface(surface, registry).byId.get('root');
+    if (node?.type !== 'Custom') throw new Error('expected Custom');
+    // {action: 42} is not a string action — falls through to props.
+    expect(node.actions['onApprove']).toBeUndefined();
   });
 });
