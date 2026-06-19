@@ -149,7 +149,9 @@ describe('custom-aware inbound', () => {
       { type: 'block_actions', actions: [{ type: 'button', action_id: enc.id }] },
       enc.registry,
     );
-    expect(effects).toEqual([{ kind: 'fireAction', surfaceId: 's', componentId: 'c', action: 'approve' }]);
+    expect(effects).toEqual([
+      { kind: 'fireAction', surfaceId: 's', componentId: 'c', action: 'approve' },
+    ]);
   });
 
   it('uses the per-param custom extractor for setData', () => {
@@ -172,11 +174,16 @@ describe('custom-aware inbound', () => {
       emptyRegistry,
     );
     const effects = interpretPayload(
-      { type: 'block_actions', actions: [{ type: 'custom_range', action_id: enc.id, value: '1-9' }] },
+      {
+        type: 'block_actions',
+        actions: [{ type: 'custom_range', action_id: enc.id, value: '1-9' }],
+      },
       enc.registry,
       custom,
     );
-    expect(effects).toEqual([{ kind: 'setData', surfaceId: 's', path: '/r', value: ['1', '9'] }]);
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/r', value: ['1', '9'] },
+    ]);
   });
 
   it('skips setData when the input ref has an empty path (no {path} binding)', () => {
@@ -185,7 +192,10 @@ describe('custom-aware inbound', () => {
       emptyRegistry,
     );
     const effects = interpretPayload(
-      { type: 'block_actions', actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }] },
+      {
+        type: 'block_actions',
+        actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }],
+      },
       enc.registry,
     );
     expect(effects).toEqual([]); // empty pointer → no write-back, never writes the model root
@@ -197,29 +207,133 @@ describe('custom-aware inbound', () => {
       emptyRegistry,
     );
     const effects = interpretPayload(
-      { type: 'block_actions', actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }] },
+      {
+        type: 'block_actions',
+        actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }],
+      },
       enc.registry,
     );
     expect(effects).toEqual([]);
   });
 
   it('honors a custom extractor that returns null (cleared)', () => {
-    const custom = buildCustomRegistry([{
-      name: 'Clearable',
-      schema: z.object({ val: z.unknown() }),
-      inputs: { val: { extract: () => null } },
-      render: () => [],
-    }]);
+    const custom = buildCustomRegistry([
+      {
+        name: 'Clearable',
+        schema: z.object({ val: z.unknown() }),
+        inputs: { val: { extract: () => null } },
+        render: () => [],
+      },
+    ]);
     const enc = encodeActionId(
-      { kind: 'input', surfaceId: 's', componentId: 'c', path: '/v',
-        custom: { component: 'Clearable', param: 'val' } },
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/v',
+        custom: { component: 'Clearable', param: 'val' },
+      },
       emptyRegistry,
     );
     const effects = interpretPayload(
-      { type: 'block_actions', actions: [{ type: 'x', action_id: enc.id, value: 'anything' }] },
-      enc.registry, custom,
+      {
+        type: 'block_actions',
+        actions: [{ type: 'x', action_id: enc.id, value: 'anything' }],
+      },
+      enc.registry,
+      custom,
     );
-    expect(effects).toEqual([{ kind: 'setData', surfaceId: 's', path: '/v', value: null }]);
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/v', value: null },
+    ]);
+  });
+
+  it('falls back to built-in extractor when ref has custom marker but no custom registry provided', () => {
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/value',
+        custom: { component: 'Custom', param: 'data' },
+      },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      {
+        type: 'block_actions',
+        actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'fallback' }],
+      },
+      enc.registry,
+      // no custom registry provided (undefined)
+    );
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/value', value: 'fallback' },
+    ]);
+  });
+
+  it('falls back to built-in extractor when custom component is not in the registry', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'Registered',
+        schema: z.object({ field: z.unknown() }),
+        inputs: { field: { extract: () => 'custom-value' } },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/value',
+        custom: { component: 'NotRegistered', param: 'field' },
+      },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      {
+        type: 'block_actions',
+        actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'builtin' }],
+      },
+      enc.registry,
+      custom,
+    );
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/value', value: 'builtin' },
+    ]);
+  });
+
+  it('falls back to built-in extractor when custom component has no inputs for the param', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'PartialInputs',
+        schema: z.object({ other: z.unknown() }),
+        inputs: { other: { extract: () => 'other-value' } },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/value',
+        custom: { component: 'PartialInputs', param: 'missing' },
+      },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      {
+        type: 'block_actions',
+        actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'fallback2' }],
+      },
+      enc.registry,
+      custom,
+    );
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/value', value: 'fallback2' },
+    ]);
   });
 });
 
