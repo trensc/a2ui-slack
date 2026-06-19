@@ -4,7 +4,10 @@ import type {
   ResolvedComponent,
   TextVariant,
 } from '../components/resolved-component.js';
-import type { CustomComponent, CustomComponentRegistry } from '../components/custom/custom-component.js';
+import type {
+  CustomComponent,
+  CustomComponentRegistry,
+} from '../components/custom/custom-component.js';
 import type { ResolvedTree } from './resolved-tree.js';
 import { resolveTree } from './resolve-tree.js';
 import { indexPath, resolveDataPath } from './internal/data-path.js';
@@ -479,10 +482,19 @@ function resolveCustom(raw: RawNode, component: CustomComponent): ResolvedCompon
   for (const [key, rawValue] of Object.entries(raw.props)) {
     const c = classifyProp(raw, key, rawValue, actionNames, inputNames);
     if (c.slot === 'action') actions[key] = c.value;
-    else if (c.slot === 'input') { inputs[key] = c.path; props[key] = c.current; }
-    else props[key] = c.value;
+    else if (c.slot === 'input') {
+      inputs[key] = c.path;
+      props[key] = c.current;
+    } else props[key] = c.value;
   }
-  return { type: 'Custom', id: raw.outputId, name: component.name, props, actions, inputs };
+  return {
+    type: 'Custom',
+    id: raw.outputId,
+    name: component.name,
+    props,
+    actions,
+    inputs,
+  };
 }
 
 /** Classify one prop by its declared marker; an action with no `{action:…}` falls through to `prop`. */
@@ -498,7 +510,11 @@ function classifyProp(
     if (action !== undefined) return { slot: 'action', value: action };
   }
   if (inputNames.has(key)) {
-    return { slot: 'input', path: writeBackPath(raw.basePath, rawValue), current: resolveValue(raw.context, rawValue) };
+    return {
+      slot: 'input',
+      path: writeBackPath(raw.basePath, rawValue),
+      current: resolveValue(raw.context, rawValue),
+    };
   }
   return { slot: 'prop', value: resolveValue(raw.context, rawValue) };
 }
