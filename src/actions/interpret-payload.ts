@@ -78,7 +78,7 @@ function fromViewSubmission(
   return setData;
 }
 
-/** Decode one element (by its action_id) and push its effect into the right bucket. */
+/** Decode one element (by its action_id) and push its effect into the right bucket; `custom` supplies per-param value extractors for custom-component inputs. */
 function addEffect(
   actionId: string,
   element: InboundElement,

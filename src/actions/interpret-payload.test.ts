@@ -202,6 +202,25 @@ describe('custom-aware inbound', () => {
     );
     expect(effects).toEqual([]);
   });
+
+  it('honors a custom extractor that returns null (cleared)', () => {
+    const custom = buildCustomRegistry([{
+      name: 'Clearable',
+      schema: z.object({ val: z.unknown() }),
+      inputs: { val: { extract: () => null } },
+      render: () => [],
+    }]);
+    const enc = encodeActionId(
+      { kind: 'input', surfaceId: 's', componentId: 'c', path: '/v',
+        custom: { component: 'Clearable', param: 'val' } },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      { type: 'block_actions', actions: [{ type: 'x', action_id: enc.id, value: 'anything' }] },
+      enc.registry, custom,
+    );
+    expect(effects).toEqual([{ kind: 'setData', surfaceId: 's', path: '/v', value: null }]);
+  });
 });
 
 describe('interpretPayload — view_submission', () => {
