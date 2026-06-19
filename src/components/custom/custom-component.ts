@@ -81,7 +81,7 @@ function assertMarkersInSchema(component: CustomComponent): void {
   }
 }
 
-/** Project a custom component into the web_core ComponentApi the Catalog consumes. Internal — not re-exported. */
+/** Project a custom component into the web_core ComponentApi shape the Catalog requires. */
 export function toComponentApi(component: CustomComponent): ComponentApi {
   return { name: component.name, schema: component.schema };
 }

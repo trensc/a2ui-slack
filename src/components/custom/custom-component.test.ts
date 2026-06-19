@@ -36,7 +36,17 @@ describe('buildCustomRegistry', () => {
       actions: ['onAprove'], // typo: not a key in schema.shape
       render: () => [],
     };
-    expect(() => buildCustomRegistry([typo])).toThrow(/onAprove.*schema|marker/i);
+    expect(() => buildCustomRegistry([typo])).toThrow(/onAprove.*schema/i);
+  });
+
+  it('throws when the schema is not a bare z.object (e.g. .refine-wrapped)', () => {
+    const refined: CustomComponent = {
+      ...card,
+      name: 'Refined',
+      schema: z.object({ x: z.string() }).refine(() => true) as unknown as z.ZodObject<z.ZodRawShape>,
+      actions: ['x'],
+    };
+    expect(() => buildCustomRegistry([refined])).toThrow(/bare z\.object/i);
   });
 });
 
