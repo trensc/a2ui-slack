@@ -42,7 +42,8 @@ export function interpretPayload(
   registry: TokenRegistry,
   custom?: CustomComponentRegistry,
 ): readonly InboundEffect[] {
-  if (payload.type === 'view_submission') return fromViewSubmission(payload, registry, custom);
+  if (payload.type === 'view_submission')
+    return fromViewSubmission(payload, registry, custom);
   return fromBlockActions(payload, registry, custom);
 }
 
@@ -106,7 +107,11 @@ function addEffect(
 
 /** Build a fireAction effect, carrying the resolved A2UI action value only when present. */
 function toFireAction(ref: ActionIdRef): InboundEffect {
-  const base = { kind: 'fireAction' as const, surfaceId: ref.surfaceId, componentId: ref.componentId };
+  const base = {
+    kind: 'fireAction' as const,
+    surfaceId: ref.surfaceId,
+    componentId: ref.componentId,
+  };
   return ref.action === undefined ? base : { ...base, action: ref.action };
 }
 

@@ -43,7 +43,9 @@ describe('buildCustomRegistry', () => {
     const refined: CustomComponent = {
       ...card,
       name: 'Refined',
-      schema: z.object({ x: z.string() }).refine(() => true) as unknown as z.ZodObject<z.ZodRawShape>,
+      schema: z
+        .object({ x: z.string() })
+        .refine(() => true) as unknown as z.ZodObject<z.ZodRawShape>,
       actions: ['x'],
     };
     expect(() => buildCustomRegistry([refined])).toThrow(/bare z\.object/i);

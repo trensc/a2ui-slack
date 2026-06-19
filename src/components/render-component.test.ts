@@ -114,7 +114,14 @@ const cases: { [T in ComponentType]: Case<T> } = {
     renderer: renderDateTimeInput,
   },
   Custom: {
-    node: { type: 'Custom', id: 'id', name: 'MyCard', props: {}, actions: {}, inputs: {} },
+    node: {
+      type: 'Custom',
+      id: 'id',
+      name: 'MyCard',
+      props: {},
+      actions: {},
+      inputs: {},
+    },
     renderer: (node) => fallbackResult(node, 'custom component rendering not yet wired'),
   },
 };

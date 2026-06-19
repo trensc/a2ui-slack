@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { Catalog, MessageProcessor, type A2uiMessage, type SurfaceModel } from '@a2ui/web_core/v0_9';
+import {
+  Catalog,
+  MessageProcessor,
+  type A2uiMessage,
+  type SurfaceModel,
+} from '@a2ui/web_core/v0_9';
 import { BASIC_COMPONENTS } from '@a2ui/web_core/v0_9/basic_catalog';
 import type { ResolvedComponent } from '../components/resolved-component.js';
 import {
@@ -673,20 +678,22 @@ describe('custom component resolution', () => {
   });
 
   it('falls back to unsupported Text for an unregistered type', () => {
-    const surface = surfaceFrom(
-      [
-        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
-        {
-          version: 'v0.9',
-          updateComponents: {
-            surfaceId: 's',
-            components: [{ id: 'root', component: 'Unknownz' }],
-          },
+    const surface = surfaceFrom([
+      { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+      {
+        version: 'v0.9',
+        updateComponents: {
+          surfaceId: 's',
+          components: [{ id: 'root', component: 'Unknownz' }],
         },
-      ],
-    );
+      },
+    ]);
     const node = resolveSurface(surface, registry).byId.get('root');
-    expect(node).toEqual({ type: 'Text', id: 'root', text: '⚠️ unsupported component: Unknownz' });
+    expect(node).toEqual({
+      type: 'Text',
+      id: 'root',
+      text: '⚠️ unsupported component: Unknownz',
+    });
   });
 
   it('treats an action prop with no {action:…} shape as a plain prop', () => {
@@ -722,9 +729,7 @@ describe('custom component resolution', () => {
           version: 'v0.9',
           updateComponents: {
             surfaceId: 's',
-            components: [
-              { id: 'root', component: 'ApprovalCard', onApprove: null },
-            ],
+            components: [{ id: 'root', component: 'ApprovalCard', onApprove: null }],
           },
         },
       ],
