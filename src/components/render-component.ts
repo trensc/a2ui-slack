@@ -1,6 +1,5 @@
 import type { RenderContext, RenderResult } from './render-context.js';
 import type { ResolvedComponent } from './resolved-component.js';
-import { fallbackResult } from './fallback.js';
 import { renderText } from './text/text.js';
 import { renderImage } from './image/image.js';
 import { renderIcon } from './icon/icon.js';
@@ -19,6 +18,7 @@ import { renderCheckBox } from './check-box/check-box.js';
 import { renderChoicePicker } from './choice-picker/choice-picker.js';
 import { renderSlider } from './slider/slider.js';
 import { renderDateTimeInput } from './date-time-input/date-time-input.js';
+import { renderCustom } from './custom/render-custom.js';
 
 /**
  * The single exhaustive dispatch: maps a resolved component to its renderer.
@@ -69,8 +69,7 @@ export function renderComponent(
     case 'DateTimeInput':
       return renderDateTimeInput(node, context);
     case 'Custom':
-      // Placeholder — Task 4 swaps this for `renderCustom(node, context)`.
-      return fallbackResult(node, 'custom component rendering not yet wired');
+      return renderCustom(node, context);
     /* v8 ignore start -- unreachable: the never assignment makes a missing case a compile error. */
     default: {
       const _exhaustive: never = node;

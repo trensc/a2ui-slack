@@ -2,6 +2,7 @@ import type { KnownBlock } from '@slack/types';
 import type { ActionIdRef } from '../action-id/action-id-ref.js';
 import type { SurfaceKind } from '../surface/surface-target.js';
 import type { ComponentType, ResolvedComponent } from './resolved-component.js';
+import type { CustomComponentRegistry } from './custom/custom-component.js';
 
 /**
  * A component that could not be mapped to Block Kit at full fidelity. Recorded,
@@ -40,6 +41,8 @@ export interface RenderContext {
   readonly encodeActionId: (ref: Omit<ActionIdRef, 'surfaceId'>) => string;
   /** The Slack surface kind this tree is being rendered into. */
   readonly surfaceKind: SurfaceKind;
+  /** Registered custom components, looked up by name during dispatch. Optional — empty when omitted. */
+  readonly customComponents?: CustomComponentRegistry;
 }
 
 /** The signature every `src/components/<name>/<name>.ts` entry implements. */

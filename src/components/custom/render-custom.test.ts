@@ -1,0 +1,248 @@
+import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
+import { renderCustom } from './render-custom.js';
+import { buildCustomRegistry } from './custom-component.js';
+import type { KnownBlock } from '@slack/types';
+import type { RenderContext } from '../render-context.js';
+import type { ResolvedOf } from '../resolved-component.js';
+
+const registry = buildCustomRegistry([
+  {
+    name: 'ApprovalCard',
+    schema: z.object({
+      onApprove: z.object({ action: z.string() }),
+      comment: z.object({ path: z.string() }),
+    }),
+    actions: ['onApprove'],
+    inputs: { comment: {} },
+    render: (p, ctx) =>
+      [
+        { type: 'section', text: { type: 'mrkdwn', text: `*${String(p['title'])}*` } },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              action_id: ctx.action('onApprove'),
+              text: { type: 'plain_text', text: 'OK' },
+            },
+            // Plain text inputs are not literally valid in an actions block per the Slack type
+            // system, but this fixture only needs to exercise action_id wiring — cast it.
+            {
+              type: 'button',
+              action_id: ctx.input('comment'),
+              text: {
+                type: 'plain_text',
+                text: typeof p['comment'] === 'string' ? p['comment'] : '',
+              },
+            },
+          ],
+        },
+      ] as KnownBlock[],
+  },
+  {
+    name: 'Boom',
+    schema: z.object({}),
+    render: () => {
+      throw new Error('kaboom');
+    },
+  },
+]);
+
+function ctx(overrides: Partial<RenderContext> = {}): RenderContext {
+  const encoded: unknown[] = [];
+  return {
+    surfaceKind: 'message',
+    renderChild: () => ({ blocks: [], degradations: [] }),
+    encodeActionId: (ref) => {
+      encoded.push(ref);
+      return `t|${String(encoded.length - 1)}`;
+    },
+    customComponents: registry,
+    ...overrides,
+  };
+}
+
+const node: ResolvedOf<'Custom'> = {
+  type: 'Custom',
+  id: 'c',
+  name: 'ApprovalCard',
+  props: { title: 'Deploy?', comment: 'hi' },
+  actions: { onApprove: 'deploy' },
+  inputs: { comment: '/note' },
+};
+
+describe('renderCustom', () => {
+  it('renders the integrator blocks and wires action_ids', () => {
+    const result = renderCustom(node, ctx());
+    expect(result.blocks).toHaveLength(2);
+    const actions = result.blocks[1] as { elements: { action_id: string }[] } | undefined;
+    if (actions === undefined) throw new Error('expected a second block');
+    expect(actions.elements[0]?.action_id).toBe('t|0'); // ctx.action('onApprove')
+    expect(actions.elements[1]?.action_id).toBe('t|1'); // ctx.input('comment')
+    expect(result.degradations).toHaveLength(0);
+  });
+
+  it('encodes the action value and custom marker into the ref', () => {
+    const refs: unknown[] = [];
+    renderCustom(
+      node,
+      ctx({
+        encodeActionId: (ref) => {
+          refs.push(ref);
+          return 'x';
+        },
+      }),
+    );
+    expect(refs[0]).toMatchObject({ kind: 'action', componentId: 'c', action: 'deploy' });
+    expect(refs[1]).toMatchObject({
+      kind: 'input',
+      componentId: 'c',
+      path: '/note',
+      custom: { component: 'ApprovalCard', param: 'comment' },
+    });
+  });
+
+  it('degrades (no throw) when the render fn throws', () => {
+    const boom: ResolvedOf<'Custom'> = { ...node, name: 'Boom', actions: {}, inputs: {} };
+    const result = renderCustom(boom, ctx());
+    expect(result.degradations[0]).toMatchObject({
+      componentId: 'c',
+      fidelity: 'dropped',
+    });
+    expect(result.blocks).toHaveLength(1); // fallback block
+  });
+
+  it('degrades (via the render try/catch) when ctx.input names an undeclared param', () => {
+    const reg = buildCustomRegistry([
+      {
+        name: 'Typo',
+        schema: z.object({ comment: z.object({ path: z.string() }) }),
+        inputs: { comment: {} },
+        render: (_p, c) =>
+          [
+            {
+              type: 'section',
+              text: { type: 'mrkdwn', text: c.input('coment') },
+            },
+          ] as KnownBlock[],
+      },
+    ]);
+    const typoNode: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'Typo',
+      actions: {},
+      inputs: { comment: '/c' },
+    };
+    const result = renderCustom(typoNode, ctx({ customComponents: reg }));
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+  });
+
+  it('degrades when ctx.action names an undeclared param (symmetric with ctx.input)', () => {
+    const reg = buildCustomRegistry([
+      {
+        name: 'ActTypo',
+        schema: z.object({ go: z.object({ action: z.string() }) }),
+        actions: ['go'],
+        render: (_p, c) => [
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                action_id: c.action('g0'),
+                text: { type: 'plain_text', text: 'x' },
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    const n: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'ActTypo',
+      actions: { go: 'run' },
+      inputs: {},
+    };
+    expect(renderCustom(n, ctx({ customComponents: reg })).degradations[0]).toMatchObject(
+      {
+        fidelity: 'dropped',
+      },
+    );
+  });
+
+  it('degrades when render returns a non-block-array (string entry)', () => {
+    const bad = buildCustomRegistry([
+      { name: 'Bad', schema: z.object({}), render: () => ['nope' as unknown as never] },
+    ]);
+    const badNode: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'Bad',
+      actions: {},
+      inputs: {},
+    };
+    expect(
+      renderCustom(badNode, ctx({ customComponents: bad })).degradations[0],
+    ).toMatchObject({ fidelity: 'dropped' });
+  });
+
+  it('degrades when an entry is an object without a string type (kills the isBlock sub-mutant)', () => {
+    const bad = buildCustomRegistry([
+      {
+        name: 'NoType',
+        schema: z.object({}),
+        render: () => [{ notType: 1 } as unknown as never],
+      },
+    ]);
+    const badNode: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'NoType',
+      actions: {},
+      inputs: {},
+    };
+    expect(
+      renderCustom(badNode, ctx({ customComponents: bad })).degradations[0],
+    ).toMatchObject({ fidelity: 'dropped' });
+  });
+
+  it('degrades when the component is missing from the registry', () => {
+    const orphan: ResolvedOf<'Custom'> = { ...node, name: 'Ghost' };
+    const result = renderCustom(orphan, ctx({ customComponents: new Map() }));
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+  });
+
+  it('encodes an action ref without action field when node.actions has no value for the param', () => {
+    // node.actions[paramName] is undefined at runtime (key absent) — exercises the
+    // `value === undefined ? ref : {...}` branch on line 60 of render-custom.ts.
+    const refs: unknown[] = [];
+    const sparseNode: ResolvedOf<'Custom'> = { ...node, actions: {} };
+    renderCustom(
+      sparseNode,
+      ctx({
+        encodeActionId: (ref) => {
+          refs.push(ref);
+          return 'x';
+        },
+      }),
+    );
+    expect(refs[0]).toMatchObject({ kind: 'action', componentId: 'c' });
+    expect((refs[0] as { action?: string }).action).toBeUndefined();
+  });
+
+  it('uses empty string path when node.inputs has no value for the param', () => {
+    // node.inputs[paramName] is undefined at runtime (key absent) — exercises the
+    // `?? ''` fallback branch on line 72 of render-custom.ts.
+    const refs: unknown[] = [];
+    const sparseNode: ResolvedOf<'Custom'> = { ...node, inputs: {} };
+    renderCustom(
+      sparseNode,
+      ctx({
+        encodeActionId: (ref) => {
+          refs.push(ref);
+          return 'x';
+        },
+      }),
+    );
+    expect(refs[1]).toMatchObject({ kind: 'input', componentId: 'c', path: '' });
+  });
+});

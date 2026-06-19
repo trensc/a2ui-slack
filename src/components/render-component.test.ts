@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ComponentType, ResolvedComponent } from './resolved-component.js';
 import type { ComponentRenderer, RenderContext } from './render-context.js';
-import { fallbackResult } from './fallback.js';
 import { renderComponent } from './render-component.js';
+import { renderCustom } from './custom/render-custom.js';
 import { renderText } from './text/text.js';
 import { renderImage } from './image/image.js';
 import { renderIcon } from './icon/icon.js';
@@ -122,7 +122,7 @@ const cases: { [T in ComponentType]: Case<T> } = {
       actions: {},
       inputs: {},
     },
-    renderer: (node) => fallbackResult(node, 'custom component rendering not yet wired'),
+    renderer: renderCustom,
   },
 };
 

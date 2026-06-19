@@ -15,6 +15,7 @@ import {
 } from '../limits/clamp-blocks.js';
 import type { SurfaceKind } from './surface-target.js';
 import type { ResolvedTree } from './resolved-tree.js';
+import type { CustomComponentRegistry } from '../components/custom/custom-component.js';
 
 export interface AssembleSurfaceInput {
   readonly tree: ResolvedTree;
@@ -22,6 +23,8 @@ export interface AssembleSurfaceInput {
   readonly surfaceKind: SurfaceKind;
   /** Per-surface token registry, threaded across re-renders by the consumer. */
   readonly registry: TokenRegistry;
+  /** Registered custom components forwarded to the render context. Defaults to empty when omitted. */
+  readonly customComponents?: CustomComponentRegistry;
 }
 
 export interface AssembledSurface {
@@ -77,6 +80,7 @@ export function assembleSurface(input: AssembleSurfaceInput): AssembledSurface {
 function buildContext(input: AssembleSurfaceInput, walk: Walk): RenderContext {
   const context: RenderContext = {
     surfaceKind: input.surfaceKind,
+    customComponents: input.customComponents ?? new Map(),
     renderChild: (id: string): RenderResult => {
       const node = input.tree.byId.get(id);
       if (node === undefined) {
