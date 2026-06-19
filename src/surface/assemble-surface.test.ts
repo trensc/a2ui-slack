@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { decodeActionId, emptyRegistry } from '../action-id/action-id.js';
 import type { ResolvedComponent } from '../components/resolved-component.js';
 import { resolveTree } from './resolve-tree.js';
 import { assembleSurface } from './assemble-surface.js';
+import { buildCustomRegistry } from '../components/custom/custom-component.js';
+import type { KnownBlock } from '@slack/types';
 
 function build(nodes: ResolvedComponent[], root: string) {
   return resolveTree({ root, nodes });
@@ -137,5 +140,62 @@ describe('assembleSurface', () => {
     const result = assemble([col, ...texts], 'col', 'modal');
     expect(result.blocks).toHaveLength(60);
     expect(result.notices).toEqual([]);
+  });
+
+  it('threads customComponents registry through buildContext into renderCustom', () => {
+    const registry = buildCustomRegistry([
+      {
+        name: 'SimpleCard',
+        schema: z.object({
+          title: z.string(),
+          onGo: z.object({ action: z.string() }),
+        }),
+        actions: ['onGo'],
+        render: (p, ctx) =>
+          [
+            {
+              type: 'section',
+              text: { type: 'mrkdwn', text: `*${String(p['title'])}*` },
+            },
+            {
+              type: 'actions',
+              elements: [
+                {
+                  type: 'button',
+                  action_id: ctx.action('onGo'),
+                  text: { type: 'plain_text', text: 'Go' },
+                },
+              ],
+            },
+          ] as KnownBlock[],
+      },
+    ]);
+    const nodes: ResolvedComponent[] = [
+      {
+        type: 'Custom',
+        id: 'card1',
+        name: 'SimpleCard',
+        props: { title: 'Deploy', onGo: {} },
+        actions: { onGo: 'deploy_action' },
+        inputs: {},
+      },
+    ];
+    const result = assembleSurface({
+      tree: build(nodes, 'card1'),
+      surfaceId: 'surf1',
+      surfaceKind: 'message',
+      registry: emptyRegistry,
+      customComponents: registry,
+    });
+    expect(result.blocks).toHaveLength(2);
+    const section = result.blocks[0];
+    expect(section?.type).toBe('section');
+    if (section?.type !== 'section') throw new Error('expected section');
+    expect(section.text?.type).toBe('mrkdwn');
+    if (section.text?.type !== 'mrkdwn') throw new Error('expected mrkdwn');
+    expect(section.text.text).toBe('*Deploy*');
+    const actions = result.blocks[1];
+    expect(actions?.type).toBe('actions');
+    expect(result.degradations).toHaveLength(0);
   });
 });
