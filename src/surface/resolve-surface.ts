@@ -140,6 +140,11 @@ function resolveNode(
     case 'DateTimeInput':
       return resolveInput(raw);
     default: {
+      // The catch-all has two outcomes: a registered custom type, else unsupported.
+      // A custom name can never reach here shadowing a built-in — buildCustomRegistry
+      // rejects any name in RESERVED (derived from BASIC_COMPONENTS). A future built-in
+      // added as a named `case` above MUST also be in BASIC_COMPONENTS so RESERVED keeps
+      // covering it; the switch and the reservation list must not drift apart.
       const registered = raw.custom.get(raw.model.type);
       return registered === undefined
         ? unsupported(raw.outputId, raw.model.type)

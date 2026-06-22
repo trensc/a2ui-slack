@@ -211,6 +211,32 @@ describe('renderCustom', () => {
     expect(result.blocks).toHaveLength(1);
   });
 
+  it('collapses identical degradations when a param is wired more than once', () => {
+    const reg = buildCustomRegistry([
+      {
+        name: 'TwiceInput',
+        schema: z.object({ comment: z.unknown().optional() }),
+        inputs: { comment: {} },
+        // The render fn references the same unbound input in two blocks.
+        render: (_p, c) =>
+          [
+            { type: 'section', text: { type: 'mrkdwn', text: c.input('comment') } },
+            { type: 'section', text: { type: 'mrkdwn', text: c.input('comment') } },
+          ] as KnownBlock[],
+      },
+    ]);
+    // comment has no write-back path ('') → each ctx.input call would push a degradation.
+    const n: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'TwiceInput',
+      actions: {},
+      inputs: { comment: '' },
+    };
+    const result = renderCustom(n, ctx({ customComponents: reg }));
+    const partials = result.degradations.filter((d) => d.fidelity === 'partial');
+    expect(partials).toHaveLength(1);
+  });
+
   it('degrades when render returns a non-block-array (string entry)', () => {
     const bad = buildCustomRegistry([
       { name: 'Bad', schema: z.object({}), render: () => ['nope' as unknown as never] },
