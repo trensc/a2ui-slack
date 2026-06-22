@@ -212,6 +212,43 @@ describe('renderCustom', () => {
     ).toMatchObject({ fidelity: 'dropped' });
   });
 
+  it('degrades when an entry has an unrecognised Block Kit type (typo, not just missing type)', () => {
+    const typo = buildCustomRegistry([
+      {
+        name: 'Typo',
+        schema: z.object({}),
+        render: () => [
+          { type: 'sektion', text: { type: 'mrkdwn', text: 'x' } } as unknown as never,
+        ],
+      },
+    ]);
+    const typoNode: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'Typo',
+      actions: {},
+      inputs: {},
+    };
+    const result = renderCustom(typoNode, ctx({ customComponents: typo }));
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toContain('did not return Block Kit blocks');
+  });
+
+  it('records a partial degradation when a declared input has no write-back path', () => {
+    // The agent omitted comment's {path}, so node.inputs.comment is absent → path ''.
+    // The user's input cannot round-trip; the renderer flags it rather than dropping silently.
+    const sparseNode: ResolvedOf<'Custom'> = { ...node, inputs: {} };
+    const result = renderCustom(sparseNode, ctx());
+    const partial = result.degradations.find((d) => d.fidelity === 'partial');
+    expect(partial).toMatchObject({ componentId: 'c', componentType: 'Custom' });
+    expect(partial?.reason).toContain('no write-back binding');
+    expect(result.blocks).toHaveLength(2); // still renders; the binding is just dead
+  });
+
+  it('records no write-back degradation when the input has a real path', () => {
+    const result = renderCustom(node, ctx()); // node.inputs.comment === '/note'
+    expect(result.degradations).toHaveLength(0);
+  });
+
   it('degrades when the component is missing from the registry', () => {
     const orphan: ResolvedOf<'Custom'> = { ...node, name: 'Ghost' };
     const result = renderCustom(orphan, ctx({ customComponents: new Map() }));

@@ -12,8 +12,24 @@ const card: CustomComponent = {
 describe('buildCustomRegistry', () => {
   it('keys components by name', () => {
     const registry = buildCustomRegistry([card]);
-    expect(registry.get('ApprovalCard')).toBe(card);
+    expect(registry.get('ApprovalCard')?.component).toBe(card);
     expect(registry.size).toBe(1);
+  });
+
+  it('precomputes the action/input marker lookup sets once', () => {
+    const marked: CustomComponent = {
+      name: 'Marked',
+      schema: z.object({
+        go: z.object({ action: z.string() }),
+        note: z.object({ path: z.string() }),
+      }),
+      actions: ['go'],
+      inputs: { note: {} },
+      render: () => [],
+    };
+    const registered = buildCustomRegistry([marked]).get('Marked');
+    expect([...(registered?.actionNames ?? [])]).toEqual(['go']);
+    expect([...(registered?.inputNames ?? [])]).toEqual(['note']);
   });
 
   it('returns an empty registry for no components', () => {

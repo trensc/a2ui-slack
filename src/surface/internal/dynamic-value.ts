@@ -10,11 +10,15 @@ import { resolveDataPath } from './data-path.js';
  * leak into the returned tree).
  */
 
-/** Narrow an unknown raw prop to a `{ path }` data binding if it is one. */
-function asPathBinding(raw: unknown): { readonly path: string } | undefined {
+/**
+ * Narrow an unknown raw A2UI value-object to the string under `key`, if present.
+ * Shared by every `{ key: '…' }` binding shape (`{path}` write-backs, `{action}`
+ * markers) so the object/null guard lives in one place.
+ */
+export function narrowStringField(raw: unknown, key: string): string | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined;
-  const candidate = raw as { path?: unknown };
-  return typeof candidate.path === 'string' ? { path: candidate.path } : undefined;
+  const candidate = (raw as Record<string, unknown>)[key];
+  return typeof candidate === 'string' ? candidate : undefined;
 }
 
 /**
@@ -23,8 +27,8 @@ function asPathBinding(raw: unknown): { readonly path: string } | undefined {
  * renderer encodes an empty pointer, i.e. no two-way write-back).
  */
 export function writeBackPath(basePath: string, rawValue: unknown): string {
-  const binding = asPathBinding(rawValue);
-  return binding ? resolveDataPath(basePath, binding.path) : '';
+  const path = narrowStringField(rawValue, 'path');
+  return path === undefined ? '' : resolveDataPath(basePath, path);
 }
 
 /** Resolve a raw dynamic value against a context, defaulting `undefined`/`null` to `undefined`. */

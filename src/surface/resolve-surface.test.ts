@@ -613,7 +613,7 @@ function surfaceFrom(
   messages: A2uiMessage[],
   customRegistry = buildCustomRegistry([]),
 ): SurfaceModel {
-  const customApis = [...customRegistry.values()].map(toComponentApi);
+  const customApis = [...customRegistry.values()].map((r) => toComponentApi(r.component));
   const processor = new MessageProcessor([
     new Catalog('a2ui-slack', [...BASIC_COMPONENTS, ...customApis]),
   ]);

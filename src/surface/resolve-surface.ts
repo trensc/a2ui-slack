@@ -5,13 +5,14 @@ import type {
   TextVariant,
 } from '../components/resolved-component.js';
 import type {
-  CustomComponent,
   CustomComponentRegistry,
+  RegisteredComponent,
 } from '../components/custom/custom-component.js';
 import type { ResolvedTree } from './resolved-tree.js';
 import { resolveTree } from './resolve-tree.js';
 import { indexPath, resolveDataPath } from './internal/data-path.js';
 import {
+  narrowStringField,
   resolveArray,
   resolveBoolean,
   resolveNumber,
@@ -139,10 +140,10 @@ function resolveNode(
     case 'DateTimeInput':
       return resolveInput(raw);
     default: {
-      const component = raw.custom.get(raw.model.type);
-      return component === undefined
+      const registered = raw.custom.get(raw.model.type);
+      return registered === undefined
         ? unsupported(raw.outputId, raw.model.type)
-        : resolveCustom(raw, component);
+        : resolveCustom(raw, registered);
     }
   }
 }
@@ -473,9 +474,8 @@ type ClassifiedProp =
   | { readonly slot: 'prop'; readonly value: unknown };
 
 /** Resolve a registered custom component: generic prop resolution + callback markers. */
-function resolveCustom(raw: RawNode, component: CustomComponent): ResolvedComponent {
-  const actionNames = new Set(component.actions ?? []);
-  const inputNames = new Set(Object.keys(component.inputs ?? {}));
+function resolveCustom(raw: RawNode, registered: RegisteredComponent): ResolvedComponent {
+  const { component, actionNames, inputNames } = registered;
   const props: Record<string, unknown> = {};
   const actions: Record<string, string> = {};
   const inputs: Record<string, string> = {};
@@ -506,7 +506,7 @@ function classifyProp(
   inputNames: ReadonlySet<string>,
 ): ClassifiedProp {
   if (actionNames.has(key)) {
-    const action = asAction(rawValue);
+    const action = narrowStringField(rawValue, 'action');
     if (action !== undefined) return { slot: 'action', value: action };
   }
   if (inputNames.has(key)) {
@@ -517,11 +517,4 @@ function classifyProp(
     };
   }
   return { slot: 'prop', value: resolveValue(raw.context, rawValue) };
-}
-
-/** Narrow an A2UI action value ({ action: '…' }) to its action string. */
-function asAction(raw: unknown): string | undefined {
-  if (typeof raw !== 'object' || raw === null) return undefined;
-  const candidate = (raw as { action?: unknown }).action;
-  return typeof candidate === 'string' ? candidate : undefined;
 }

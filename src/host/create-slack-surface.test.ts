@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
-import type { ActionsBlock } from '@slack/types';
+import type { ActionsBlock, InputBlock } from '@slack/types';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import type { SlackInteractionPayload } from '../actions/interpret-payload.js';
+import type { CustomComponent } from '../components/custom/custom-component.js';
 import type { RegistryStore } from './registry-store.js';
 import { createSlackSurface } from './create-slack-surface.js';
 
@@ -138,5 +140,100 @@ describe('createSlackSurface.inbound', () => {
       actions: [{ type: 'button', action_id: 'UNKNOWN' }],
     };
     expect(await surface.inbound('never-rendered', payload)).toEqual([]);
+  });
+});
+
+describe('createSlackSurface with custom components', () => {
+  const approvalCard: CustomComponent = {
+    name: 'ApprovalCard',
+    schema: z.object({
+      title: z.unknown().optional(),
+      onApprove: z.unknown().optional(),
+      comment: z.unknown().optional(),
+    }),
+    actions: ['onApprove'],
+    inputs: { comment: { extract: () => 'EXTRACTED' } },
+    render: (props, ctx) => [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: `Approve ${String(props['title'])}?` },
+      },
+      {
+        type: 'input',
+        block_id: 'note',
+        label: { type: 'plain_text', text: 'Comment' },
+        element: { type: 'plain_text_input', action_id: ctx.input('comment') },
+      },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            action_id: ctx.action('onApprove'),
+            text: { type: 'plain_text', text: 'OK' },
+          },
+        ],
+      },
+    ],
+  };
+
+  const customMessages: A2uiMessage[] = [
+    { version: 'v0.9', createSurface: { surfaceId: 'cc', catalogId: 'a2ui-slack' } },
+    {
+      version: 'v0.9',
+      updateComponents: {
+        surfaceId: 'cc',
+        components: [
+          {
+            component: 'ApprovalCard',
+            id: 'root',
+            title: 'Deploy',
+            onApprove: { action: 'deploy' },
+            comment: { path: '/note' },
+          },
+        ],
+      },
+    },
+  ];
+
+  it('renders a registered custom component end-to-end (not the unsupported fallback)', async () => {
+    const surface = createSlackSurface({ customComponents: [approvalCard] });
+    const { blocks, degradations } = await surface.render('cc', customMessages);
+    expect(JSON.stringify(blocks)).toContain('Approve Deploy?');
+    expect(JSON.stringify(blocks)).not.toContain('unsupported component');
+    expect(degradations).toEqual([]); // comment is {path:'/note'} → real write-back, no degradation
+  });
+
+  it('advertises registered custom components in capabilities', () => {
+    const surface = createSlackSurface({ customComponents: [approvalCard] });
+    expect(JSON.stringify(surface.capabilities)).toContain('ApprovalCard');
+  });
+
+  it('runs the per-param extractor on the inbound path', async () => {
+    const surface = createSlackSurface({ customComponents: [approvalCard] });
+    const { blocks } = await surface.render('cc', customMessages);
+    const inputBlock = blocks.find((b): b is InputBlock => b.type === 'input');
+    const actionId =
+      inputBlock && 'action_id' in inputBlock.element
+        ? inputBlock.element.action_id
+        : undefined;
+    expect(actionId).toBeTypeOf('string');
+    const payload: SlackInteractionPayload = {
+      type: 'block_actions',
+      actions: [
+        { type: 'plain_text_input', action_id: actionId ?? '', value: 'raw typed' },
+      ],
+    };
+    const effects = await surface.inbound('cc', payload);
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 'cc', path: '/note', value: 'EXTRACTED' },
+    ]);
+  });
+
+  it('throws at construction on a reserved custom component name', () => {
+    const clash: CustomComponent = { ...approvalCard, name: 'Button' };
+    expect(() => createSlackSurface({ customComponents: [clash] })).toThrow(
+      /built-in|reserved|Button/i,
+    );
   });
 });

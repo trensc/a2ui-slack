@@ -26,3 +26,31 @@ export interface ActionIdRef {
   /** Set for custom-component callbacks so inbound can find a per-param extractor. */
   readonly custom?: { readonly component: string; readonly param: string };
 }
+
+/** The render-side view of a ref: every field except `surfaceId`, which the surface layer injects. */
+export type PartialActionIdRef = Omit<ActionIdRef, 'surfaceId'>;
+
+/**
+ * Build an `action` ref, carrying the resolved A2UI action value only when
+ * present. Centralises the `exactOptionalPropertyTypes` conditional-spread so the
+ * ref shape is authored in one place rather than at every encode site.
+ */
+export function actionRef(componentId: string, action?: string): PartialActionIdRef {
+  return action === undefined
+    ? { kind: 'action', componentId }
+    : { kind: 'action', componentId, action };
+}
+
+/**
+ * Build an `input` ref; `custom` marks a custom-component param so the inbound
+ * decoder can find its per-param extractor.
+ */
+export function inputRef(
+  componentId: string,
+  path: string,
+  custom?: ActionIdRef['custom'],
+): PartialActionIdRef {
+  return custom === undefined
+    ? { kind: 'input', componentId, path }
+    : { kind: 'input', componentId, path, custom };
+}

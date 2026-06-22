@@ -248,6 +248,41 @@ describe('custom-aware inbound', () => {
     ]);
   });
 
+  it('defers to the built-in extractor when a custom extractor returns undefined', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'Deferring',
+        schema: z.object({ val: z.unknown() }),
+        // Returns undefined for this element → fall through to the built-in extractor.
+        inputs: { val: { extract: () => undefined } },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/v',
+        custom: { component: 'Deferring', param: 'val' },
+      },
+      emptyRegistry,
+    );
+    const effects = interpretPayload(
+      {
+        type: 'block_actions',
+        actions: [
+          { type: 'plain_text_input', action_id: enc.id, value: 'built-in wins' },
+        ],
+      },
+      enc.registry,
+      custom,
+    );
+    expect(effects).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/v', value: 'built-in wins' },
+    ]);
+  });
+
   it('falls back to built-in extractor when ref has custom marker but no custom registry provided', () => {
     const enc = encodeActionId(
       {

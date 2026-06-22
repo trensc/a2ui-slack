@@ -122,6 +122,7 @@ function customExtract(
   custom?: CustomComponentRegistry,
 ): JsonValue | undefined {
   if (ref.custom === undefined || custom === undefined) return undefined;
-  const extractor = custom.get(ref.custom.component)?.inputs?.[ref.custom.param]?.extract;
+  const extractor = custom.get(ref.custom.component)?.component.inputs?.[ref.custom.param]
+    ?.extract;
   return extractor === undefined ? undefined : extractor(element);
 }

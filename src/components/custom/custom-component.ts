@@ -14,7 +14,12 @@ export interface CustomComponentContext {
 }
 
 export interface CustomInputSpec {
-  readonly extract?: (element: InboundElement) => JsonValue;
+  /**
+   * Decode a raw Slack element into the value written to the data model. Return
+   * `undefined` to defer to the built-in extractor for this element (the inbound
+   * path falls back on `undefined`); return `null` to write an explicit cleared value.
+   */
+  readonly extract?: (element: InboundElement) => JsonValue | undefined;
 }
 
 export interface CustomComponent<
@@ -27,7 +32,19 @@ export interface CustomComponent<
   readonly render: (props: P, ctx: CustomComponentContext) => readonly KnownBlock[];
 }
 
-export type CustomComponentRegistry = ReadonlyMap<string, CustomComponent>;
+/**
+ * A validated component plus its callback-marker lookup sets, computed once at
+ * registry-build time. Resolution and rendering both read these precomputed sets
+ * instead of rebuilding them per node / per render — the marker derivation lives
+ * in exactly one place ([[buildCustomRegistry]]).
+ */
+export interface RegisteredComponent {
+  readonly component: CustomComponent;
+  readonly actionNames: ReadonlySet<string>;
+  readonly inputNames: ReadonlySet<string>;
+}
+
+export type CustomComponentRegistry = ReadonlyMap<string, RegisteredComponent>;
 
 /**
  * Every built-in component name is reserved — a custom component may not shadow one,
@@ -41,7 +58,7 @@ const RESERVED: ReadonlySet<string> = new Set(
 export function buildCustomRegistry(
   components: readonly CustomComponent[],
 ): CustomComponentRegistry {
-  const map = new Map<string, CustomComponent>();
+  const map = new Map<string, RegisteredComponent>();
   for (const component of components) {
     if (RESERVED.has(component.name)) {
       throw new Error(
@@ -54,7 +71,11 @@ export function buildCustomRegistry(
       );
     }
     assertMarkersInSchema(component);
-    map.set(component.name, component);
+    map.set(component.name, {
+      component,
+      actionNames: new Set(component.actions ?? []),
+      inputNames: new Set(Object.keys(component.inputs ?? {})),
+    });
   }
   return map;
 }

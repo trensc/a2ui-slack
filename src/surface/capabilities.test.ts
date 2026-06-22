@@ -47,6 +47,17 @@ describe('buildCapabilities', () => {
     expect(json).not.toContain('Modal'); // omitted set still honored
   });
 
+  it('rejects a custom component whose name collides with a built-in (validated like buildCustomRegistry)', () => {
+    expect(() =>
+      buildCapabilities([{ name: 'Button', schema: z.object({}), render: () => [] }]),
+    ).toThrow(/built-in|reserved|Button/i);
+  });
+
+  it('rejects duplicate custom component names', () => {
+    const dup = { name: 'Dup', schema: z.object({}), render: () => [] };
+    expect(() => buildCapabilities([dup, dup])).toThrow(/duplicate.*Dup/i);
+  });
+
   it('is unchanged when no custom components are passed', () => {
     expect(JSON.stringify(buildCapabilities())).toEqual(
       JSON.stringify(buildCapabilities([])),
