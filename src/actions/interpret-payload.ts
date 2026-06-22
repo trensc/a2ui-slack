@@ -117,7 +117,13 @@ function toFireAction(ref: ActionIdRef): InboundEffect {
   return ref.action === undefined ? base : { ...base, action: ref.action };
 }
 
-/** Resolve a custom per-param extractor for this ref, if one is registered. */
+/**
+ * Resolve a custom per-param extractor for this ref, if one is registered.
+ * Integrator code (`extract`) is sandboxed: a throw is caught and treated as
+ * `undefined` (defer to the built-in extractor) so one buggy extractor can never
+ * crash the whole inbound decode. The decode path has no degradation channel, so
+ * the failure is silent here — surface it via the host if observability is needed.
+ */
 function customExtract(
   ref: ActionIdRef,
   element: InboundElement,
@@ -126,5 +132,10 @@ function customExtract(
   if (ref.custom === undefined || custom === undefined) return undefined;
   const extractor = custom.get(ref.custom.component)?.component.inputs?.[ref.custom.param]
     ?.extract;
-  return extractor === undefined ? undefined : extractor(element);
+  if (extractor === undefined) return undefined;
+  try {
+    return extractor(element);
+  } catch {
+    return undefined;
+  }
 }

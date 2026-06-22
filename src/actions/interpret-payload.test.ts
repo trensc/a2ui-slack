@@ -4,6 +4,7 @@ import { emptyRegistry, encodeActionId } from '../action-id/action-id.js';
 import type { ActionIdRef } from '../action-id/action-id-ref.js';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import { interpretPayload } from './interpret-payload.js';
+import type { InboundEffect } from './inbound-effect.js';
 import { buildCustomRegistry } from '../components/custom/custom-component.js';
 
 /** Encode refs into a registry; `id(i)` returns the i-th token id (always a string). */
@@ -280,6 +281,47 @@ describe('custom-aware inbound', () => {
     );
     expect(effects).toEqual([
       { kind: 'setData', surfaceId: 's', path: '/v', value: 'built-in wins' },
+    ]);
+  });
+
+  it('defers to the built-in extractor when a custom extractor throws (never propagates)', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'Throwing',
+        schema: z.object({ val: z.unknown() }),
+        // Integrator bug: e.g. reads a field off an undefined value.
+        inputs: {
+          val: {
+            extract: () => {
+              throw new Error('boom');
+            },
+          },
+        },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/v',
+        custom: { component: 'Throwing', param: 'val' },
+      },
+      emptyRegistry,
+    );
+    const run = (): readonly InboundEffect[] =>
+      interpretPayload(
+        {
+          type: 'block_actions',
+          actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'survives' }],
+        },
+        enc.registry,
+        custom,
+      );
+    expect(run).not.toThrow();
+    expect(run()).toEqual([
+      { kind: 'setData', surfaceId: 's', path: '/v', value: 'survives' },
     ]);
   });
 
