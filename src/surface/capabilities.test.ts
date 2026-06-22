@@ -9,6 +9,7 @@ import {
 
 describe('buildCapabilities', () => {
   it('advertises the reduced Slack catalog id under v0.9', () => {
+    expect(SLACK_CATALOG_ID).toBe('a2ui-slack');
     const caps = buildCapabilities();
     expect(caps['v0.9'].supportedCatalogIds).toContain(SLACK_CATALOG_ID);
   });
