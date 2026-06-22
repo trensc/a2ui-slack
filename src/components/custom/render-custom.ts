@@ -39,9 +39,11 @@ export function renderCustom(
 /**
  * Build the ctx passed to an integrator's render function.
  * `action` and `input` throw on an undeclared param name so a typo degrades,
- * never wires a dead or root-pointer action_id. An `input` whose resolved node
- * carries no write-back path records a `partial` degradation — the value the user
- * types cannot round-trip, and the renderer never fails silently.
+ * never wires a dead or root-pointer action_id. Two `partial` degradations keep
+ * the renderer from failing silently: an `input` whose resolved node carries no
+ * write-back path (the typed value cannot round-trip), and an `action` that
+ * resolved no value (the agent sent a non-`{event:{name}}` Action, so the
+ * callback fires without a disambiguator).
  */
 function buildCustomContext(
   node: ResolvedOf<'Custom'>,
@@ -59,7 +61,16 @@ function buildCustomContext(
           `ctx.action: "${paramName}" is not a declared action of "${component.name}"`,
         );
       }
-      return context.encodeActionId(actionRef(node.id, node.actions[paramName]));
+      const action = node.actions[paramName];
+      if (action === undefined) {
+        degradations.push({
+          componentId: node.id,
+          componentType: 'Custom',
+          fidelity: 'partial',
+          reason: `custom action "${paramName}" of "${component.name}" resolved no action value (not a v0.9 {event:{name}}); the callback fires without a disambiguator`,
+        });
+      }
+      return context.encodeActionId(actionRef(node.id, action));
     },
     input: (paramName) => {
       if (!inputNames.has(paramName)) {

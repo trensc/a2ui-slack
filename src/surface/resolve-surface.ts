@@ -12,7 +12,7 @@ import type { ResolvedTree } from './resolved-tree.js';
 import { resolveTree } from './resolve-tree.js';
 import { indexPath, resolveDataPath } from './internal/data-path.js';
 import {
-  narrowStringField,
+  extractActionName,
   resolveArray,
   resolveBoolean,
   resolveNumber,
@@ -497,7 +497,7 @@ function resolveCustom(raw: RawNode, registered: RegisteredComponent): ResolvedC
   };
 }
 
-/** Classify one prop by its declared marker; an action with no `{action:…}` falls through to `prop`. */
+/** Classify one prop by its declared marker; an action with no resolvable `event.name` falls through to `prop` (and degrades at render when wired). */
 function classifyProp(
   raw: RawNode,
   key: string,
@@ -506,7 +506,7 @@ function classifyProp(
   inputNames: ReadonlySet<string>,
 ): ClassifiedProp {
   if (actionNames.has(key)) {
-    const action = narrowStringField(rawValue, 'action');
+    const action = extractActionName(rawValue);
     if (action !== undefined) return { slot: 'action', value: action };
   }
   if (inputNames.has(key)) {

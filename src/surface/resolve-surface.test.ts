@@ -659,7 +659,7 @@ describe('custom component resolution', () => {
                 id: 'root',
                 component: 'ApprovalCard',
                 title: 'Deploy?',
-                onApprove: { action: 'deploy' },
+                onApprove: { event: { name: 'deploy' } },
                 comment: { path: '/note' },
               },
             ],
@@ -696,7 +696,7 @@ describe('custom component resolution', () => {
     });
   });
 
-  it('treats an action prop with no {action:…} shape as a plain prop', () => {
+  it('treats an action prop with no event.name shape as a plain prop', () => {
     // onApprove is declared as an action, but the agent supplied a non-action literal.
     // classifyProp falls through to the 'prop' slot.
     const surface = surfaceFrom(
@@ -716,7 +716,7 @@ describe('custom component resolution', () => {
     );
     const node = resolveSurface(surface, registry).byId.get('root');
     if (node?.type !== 'Custom') throw new Error('expected Custom');
-    // onApprove was not {action:…} so it lands in props, not actions.
+    // onApprove had no event.name so it lands in props, not actions.
     expect(node.actions['onApprove']).toBeUndefined();
     expect(node.props['onApprove']).toBe('not-an-action');
   });
@@ -769,8 +769,8 @@ describe('custom component resolution', () => {
     expect(node.props['title']).toBe('Hi');
   });
 
-  it('treats an action prop whose {action} value is non-string as a plain prop', () => {
-    // Exercises the false branch of `typeof candidate === 'string'` in asAction.
+  it('treats an event with a non-string name as a plain prop', () => {
+    // Exercises the false branch of the string check inside extractActionName.
     const surface = surfaceFrom(
       [
         { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
@@ -779,7 +779,11 @@ describe('custom component resolution', () => {
           updateComponents: {
             surfaceId: 's',
             components: [
-              { id: 'root', component: 'ApprovalCard', onApprove: { action: 42 } },
+              {
+                id: 'root',
+                component: 'ApprovalCard',
+                onApprove: { event: { name: 42 } },
+              },
             ],
           },
         },
@@ -788,7 +792,33 @@ describe('custom component resolution', () => {
     );
     const node = resolveSurface(surface, registry).byId.get('root');
     if (node?.type !== 'Custom') throw new Error('expected Custom');
-    // {action: 42} is not a string action — falls through to props.
+    // event.name is not a string — falls through to props.
+    expect(node.actions['onApprove']).toBeUndefined();
+  });
+
+  it('treats a {functionCall} action as a plain prop (no client runtime on Slack)', () => {
+    const surface = surfaceFrom(
+      [
+        { version: 'v0.9', createSurface: { surfaceId: 's', catalogId: 'a2ui-slack' } },
+        {
+          version: 'v0.9',
+          updateComponents: {
+            surfaceId: 's',
+            components: [
+              {
+                id: 'root',
+                component: 'ApprovalCard',
+                onApprove: { functionCall: { call: 'doThing', args: {} } },
+              },
+            ],
+          },
+        },
+      ],
+      registry,
+    );
+    const node = resolveSurface(surface, registry).byId.get('root');
+    if (node?.type !== 'Custom') throw new Error('expected Custom');
+    // functionCall has no event.name — falls through to props; degrades at render when wired.
     expect(node.actions['onApprove']).toBeUndefined();
   });
 });

@@ -188,7 +188,7 @@ describe('createSlackSurface with custom components', () => {
             component: 'ApprovalCard',
             id: 'root',
             title: 'Deploy',
-            onApprove: { action: 'deploy' },
+            onApprove: { event: { name: 'deploy' } },
             comment: { path: '/note' },
           },
         ],

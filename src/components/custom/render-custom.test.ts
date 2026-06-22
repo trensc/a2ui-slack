@@ -176,6 +176,41 @@ describe('renderCustom', () => {
     );
   });
 
+  it('records a partial degradation when a wired action resolved no value', () => {
+    const reg = buildCustomRegistry([
+      {
+        name: 'NoVal',
+        schema: z.object({ onApprove: z.unknown().optional() }),
+        actions: ['onApprove'],
+        render: (_p, c) => [
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                action_id: c.action('onApprove'),
+                text: { type: 'plain_text', text: 'x' },
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    // The agent sent a non-{event:{name}} Action, so resolveCustom left actions empty.
+    const n: ResolvedOf<'Custom'> = { ...node, name: 'NoVal', actions: {}, inputs: {} };
+    const result = renderCustom(n, ctx({ customComponents: reg }));
+    expect(result.degradations[0]).toMatchObject({
+      componentId: 'c',
+      componentType: 'Custom',
+      fidelity: 'partial',
+    });
+    expect(result.degradations[0]?.reason).toContain(
+      'custom action "onApprove" of "NoVal" resolved no action value',
+    );
+    // Still renders (not a hard fallback) — the button just lacks a disambiguator.
+    expect(result.blocks).toHaveLength(1);
+  });
+
   it('degrades when render returns a non-block-array (string entry)', () => {
     const bad = buildCustomRegistry([
       { name: 'Bad', schema: z.object({}), render: () => ['nope' as unknown as never] },

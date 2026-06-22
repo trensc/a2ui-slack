@@ -22,6 +22,17 @@ export function narrowStringField(raw: unknown, key: string): string | undefined
 }
 
 /**
+ * The disambiguator name of an A2UI v0.9 Action, i.e. `value.event.name`.
+ * Returns `undefined` for any non-conforming shape — a `{functionCall:…}` action
+ * (no client runtime on Slack), a malformed event, or a non-string name — so the
+ * caller can degrade rather than wire a value-less callback.
+ */
+export function extractActionName(raw: unknown): string | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  return narrowStringField((raw as { event?: unknown }).event, 'name');
+}
+
+/**
  * The absolute write-back JSON pointer for an input's `value`. Only `{path}`
  * bindings are writable; literals and `{call}` values resolve to `''` (the
  * renderer encodes an empty pointer, i.e. no two-way write-back).
