@@ -1,4 +1,5 @@
 import type { KnownBlock } from '@slack/types';
+import { actionRef } from '../../action-id/action-id-ref.js';
 import type { ComponentRenderer, DegradationReport } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
 import { buildSwitchControl, type ResolvedTab } from './internal/tab-switch.js';
@@ -23,7 +24,7 @@ export const renderTabs: ComponentRenderer<'Tabs'> = (node, context) => {
   const switchControl = buildSwitchControl(
     node.tabs,
     active.index,
-    context.encodeActionId({ kind: 'action', componentId: node.id }),
+    context.encodeActionId(actionRef(node.id)),
     node.id,
   );
   const child = context.renderChild(active.tab.childId);

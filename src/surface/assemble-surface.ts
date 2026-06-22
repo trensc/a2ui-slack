@@ -5,7 +5,7 @@ import type {
   RenderContext,
   RenderResult,
 } from '../components/render-context.js';
-import type { ActionIdRef } from '../action-id/action-id-ref.js';
+import type { PartialActionIdRef } from '../action-id/action-id-ref.js';
 import { encodeActionId } from '../action-id/action-id.js';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import {
@@ -89,7 +89,7 @@ function buildContext(input: AssembleSurfaceInput, walk: Walk): RenderContext {
       }
       return renderComponent(node, context);
     },
-    encodeActionId: (ref: Omit<ActionIdRef, 'surfaceId'>): string => {
+    encodeActionId: (ref: PartialActionIdRef): string => {
       const result = encodeActionId(
         { ...ref, surfaceId: input.surfaceId },
         walk.registry,

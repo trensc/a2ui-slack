@@ -12,6 +12,7 @@ import type {
   RenderResult,
 } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
+import { inputRef } from '../../action-id/action-id-ref.js';
 
 const MAX_OPTIONS = 100;
 
@@ -24,11 +25,7 @@ const MAX_OPTIONS = 100;
  * in an `input` block, dispatching on Enter when the surface is a message.
  */
 export const renderSlider: ComponentRenderer<'Slider'> = (node, context) => {
-  const actionId = context.encodeActionId({
-    kind: 'input',
-    componentId: node.id,
-    path: node.path,
-  });
+  const actionId = context.encodeActionId(inputRef(node.id, node.path));
   const steps = node.max - node.min + 1;
   return steps <= MAX_OPTIONS
     ? steppedSelect(node, actionId, context)

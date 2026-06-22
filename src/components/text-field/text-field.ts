@@ -6,6 +6,7 @@ import type {
   RenderResult,
 } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
+import { inputRef } from '../../action-id/action-id-ref.js';
 import { clip } from '../../limits/clip.js';
 import { INPUT_LABEL_MAX, clampSectionText } from '../../limits/clamp-text.js';
 /** Shown when the label resolves to empty (Slack rejects empty plain_text). */
@@ -45,11 +46,7 @@ function renderEditable(
   context: RenderContext,
 ): RenderResult {
   const label = resolveLabel(node.label);
-  const actionId = context.encodeActionId({
-    kind: 'input',
-    componentId: node.id,
-    path: node.path,
-  });
+  const actionId = context.encodeActionId(inputRef(node.id, node.path));
   const block: InputBlock = {
     type: 'input',
     block_id: actionId,

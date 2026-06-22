@@ -212,25 +212,21 @@ describe('renderCustom', () => {
     ).toMatchObject({ fidelity: 'dropped' });
   });
 
-  it('degrades when an entry has an unrecognised Block Kit type (typo, not just missing type)', () => {
-    const typo = buildCustomRegistry([
+  it('accepts a block whose type is not in the basic catalog (e.g. markdown) — Slack validates types at post time', () => {
+    // The structural guard only requires an object with a string `type`; it does NOT
+    // enumerate valid Slack block types (that set drifts every @slack/types release).
+    // A valid `markdown` block must pass through, not degrade.
+    const md = buildCustomRegistry([
       {
-        name: 'Typo',
+        name: 'Md',
         schema: z.object({}),
-        render: () => [
-          { type: 'sektion', text: { type: 'mrkdwn', text: 'x' } } as unknown as never,
-        ],
+        render: () => [{ type: 'markdown', text: '**hi**' } as unknown as never],
       },
     ]);
-    const typoNode: ResolvedOf<'Custom'> = {
-      ...node,
-      name: 'Typo',
-      actions: {},
-      inputs: {},
-    };
-    const result = renderCustom(typoNode, ctx({ customComponents: typo }));
-    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
-    expect(result.degradations[0]?.reason).toContain('did not return Block Kit blocks');
+    const mdNode: ResolvedOf<'Custom'> = { ...node, name: 'Md', actions: {}, inputs: {} };
+    const result = renderCustom(mdNode, ctx({ customComponents: md }));
+    expect(result.degradations).toHaveLength(0);
+    expect(result.blocks).toHaveLength(1);
   });
 
   it('records a partial degradation when a declared input has no write-back path', () => {

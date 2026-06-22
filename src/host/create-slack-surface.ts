@@ -12,7 +12,10 @@ import { buildCustomRegistry } from '../components/custom/custom-component.js';
 import type { CustomComponent } from '../components/custom/custom-component.js';
 import { assembleSurface } from '../surface/assemble-surface.js';
 import type { AssembledSurface } from '../surface/assemble-surface.js';
-import { buildCapabilities, slackCatalogComponents } from '../surface/capabilities.js';
+import {
+  capabilitiesFromCatalog,
+  slackCatalogComponents,
+} from '../surface/capabilities.js';
 import { resolveSurface } from '../surface/resolve-surface.js';
 import type { SurfaceKind } from '../surface/surface-target.js';
 import { InMemoryRegistryStore } from './in-memory-store.js';
@@ -69,13 +72,15 @@ export function createSlackSurface(options: SlackSurfaceOptions = {}): SlackSurf
   const catalogId = options.catalogId ?? 'a2ui-slack';
   const keyPrefix = options.keyPrefix ?? '';
   const customRegistry = buildCustomRegistry(options.customComponents ?? []);
+  const catalogComponents = slackCatalogComponents(customRegistry);
   const processor = new MessageProcessor<ComponentApi>([
-    new Catalog<ComponentApi>(catalogId, slackCatalogComponents(customRegistry)),
+    new Catalog<ComponentApi>(catalogId, catalogComponents),
   ]);
   const keyFor = (surfaceId: string): string => `${keyPrefix}${surfaceId}`;
 
   return {
-    capabilities: buildCapabilities(options.customComponents ?? []),
+    // Reuse the registry built above — no second buildCustomRegistry/validation pass.
+    capabilities: capabilitiesFromCatalog(catalogComponents),
 
     async render(surfaceId, messages, surfaceKind = 'message') {
       processor.processMessages(messages);

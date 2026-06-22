@@ -33,7 +33,6 @@ export type {
   CustomComponentRegistry,
   CustomInputSpec,
 } from './components/custom/custom-component.js';
-export { renderCustom } from './components/custom/render-custom.js';
 
 // surface
 export { resolveTree } from './surface/resolve-tree.js';
@@ -60,7 +59,6 @@ export type {
   SlackInteractionPayload,
   ViewSubmissionPayload,
 } from './actions/interpret-payload.js';
-export type { InboundElement } from './actions/interpret-payload.js';
 
 // scheduler
 export {

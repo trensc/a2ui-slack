@@ -13,6 +13,7 @@ function contextFrom(map: Record<string, RenderResult>): RenderContext {
     renderChild: (id) => map[id] ?? { blocks: [], degradations: [] },
     encodeActionId: () => 'a|c',
     surfaceKind: 'message',
+    customComponents: new Map(),
   };
 }
 

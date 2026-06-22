@@ -14,6 +14,7 @@ function context(surfaceKind: RenderContext['surfaceKind']): RenderContext {
     renderChild: () => ({ blocks: [], degradations: [] }),
     encodeActionId: (ref) => `id|${ref.kind}|${ref.componentId}|${ref.path ?? ''}`,
     surfaceKind,
+    customComponents: new Map(),
   };
 }
 
@@ -192,6 +193,7 @@ describe('renderTextField', () => {
         return result.id;
       },
       surfaceKind: 'message',
+      customComponents: new Map(),
     };
     const { blocks } = renderTextField(node({ path }), context);
     const [block] = blocks;

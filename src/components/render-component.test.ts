@@ -26,6 +26,7 @@ const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: (ref) => `enc|${ref.kind}|${ref.componentId}|${ref.path ?? ''}`,
   surfaceKind: 'message',
+  customComponents: new Map(),
 };
 
 // One sample per type, plus the concrete renderer the dispatch MUST route it to.

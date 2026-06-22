@@ -1,5 +1,5 @@
 import type { KnownBlock } from '@slack/types';
-import type { ActionIdRef } from '../action-id/action-id-ref.js';
+import type { PartialActionIdRef } from '../action-id/action-id-ref.js';
 import type { SurfaceKind } from '../surface/surface-target.js';
 import type { ComponentType, ResolvedComponent } from './resolved-component.js';
 import type { CustomComponentRegistry } from './custom/custom-component.js';
@@ -38,11 +38,11 @@ export interface RenderContext {
    * surface layer injects `surfaceId` (a surface concern) so pure renderers stay
    * surface-agnostic — they supply only `kind`, `componentId`, and `path`.
    */
-  readonly encodeActionId: (ref: Omit<ActionIdRef, 'surfaceId'>) => string;
+  readonly encodeActionId: (ref: PartialActionIdRef) => string;
   /** The Slack surface kind this tree is being rendered into. */
   readonly surfaceKind: SurfaceKind;
-  /** Registered custom components, looked up by name during dispatch. Optional — empty when omitted. */
-  readonly customComponents?: CustomComponentRegistry;
+  /** Registered custom components, looked up by name during dispatch. Always set (empty when none); the surface layer defaults it. */
+  readonly customComponents: CustomComponentRegistry;
 }
 
 /** The signature every `src/components/<name>/<name>.ts` entry implements. */

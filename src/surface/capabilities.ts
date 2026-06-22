@@ -36,18 +36,31 @@ export function slackCatalogComponents(custom: CustomComponentRegistry): Compone
 }
 
 /**
+ * Build capabilities from an already-resolved Slack catalog (see
+ * {@link slackCatalogComponents}). Does NO custom-component validation — the caller
+ * owns that — so a host that already built its registry can advertise it without a
+ * redundant second {@link buildCustomRegistry} pass. Pure & deterministic: spins up a
+ * throwaway `MessageProcessor` purely to reuse web_core's schema→JSON-Schema
+ * conversion, holds no module state, and never does I/O.
+ */
+export function capabilitiesFromCatalog(
+  components: readonly ComponentApi[],
+): A2uiClientCapabilities {
+  const catalog = new Catalog(SLACK_CATALOG_ID, [...components]);
+  const processor = new MessageProcessor([catalog]);
+  return processor.getClientCapabilities({ includeInlineCatalogs: true });
+}
+
+/**
  * Build the v0.9 `a2uiClientCapabilities` advertising a REDUCED inline catalog
  * (see {@link slackCatalogComponents}). Custom components are validated through
  * {@link buildCustomRegistry} first, so a reserved/duplicate name fails here with
- * an actionable error rather than producing an ambiguous catalog.
- * Pure & deterministic — it spins up a throwaway `MessageProcessor` purely to reuse
- * web_core's schema→JSON-Schema conversion, holds no module state, and never does I/O.
+ * an actionable error rather than producing an ambiguous catalog. Standalone entry
+ * point; a host with a pre-built registry calls {@link capabilitiesFromCatalog} directly.
  */
 export function buildCapabilities(
   customComponents: readonly CustomComponent[] = [],
 ): A2uiClientCapabilities {
   const registry = buildCustomRegistry(customComponents);
-  const catalog = new Catalog(SLACK_CATALOG_ID, slackCatalogComponents(registry));
-  const processor = new MessageProcessor([catalog]);
-  return processor.getClientCapabilities({ includeInlineCatalogs: true });
+  return capabilitiesFromCatalog(slackCatalogComponents(registry));
 }

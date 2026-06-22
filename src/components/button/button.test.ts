@@ -33,6 +33,7 @@ function makeContext(): {
       return result.id;
     },
     surfaceKind: 'message',
+    customComponents: new Map(),
   };
   const decode = (id: string): ActionIdRef | undefined => {
     const result = decodeActionId(id, registry);

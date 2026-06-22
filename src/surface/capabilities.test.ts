@@ -64,7 +64,7 @@ describe('buildCapabilities', () => {
     );
   });
 
-  it('surfaces Zod .describe() text in capabilities output (Task 7 prep)', () => {
+  it('propagates Zod .describe() text into the inline catalog output', () => {
     const caps = buildCapabilities([
       {
         name: 'DescribeCard',
@@ -74,9 +74,9 @@ describe('buildCapabilities', () => {
     ]);
     const json = JSON.stringify(caps);
     // Zod .describe() sets the JSON Schema "description" field, which web_core's
-    // schema-to-JSON-Schema conversion DOES propagate into the inline catalog output
-    // (same as the basic catalog's own field descriptions). Asserting presence so
-    // Task 7 / README can tell integrators to use .describe() to guide the agent.
+    // schema-to-JSON-Schema conversion propagates into the inline catalog output
+    // (same as the basic catalog's own field descriptions) — so integrators can use
+    // .describe() to guide the agent.
     expect(json).toContain('The card heading');
   });
 });

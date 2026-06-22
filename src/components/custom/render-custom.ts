@@ -14,7 +14,7 @@ export function renderCustom(
   node: ResolvedOf<'Custom'>,
   context: RenderContext,
 ): RenderResult {
-  const registered = context.customComponents?.get(node.name);
+  const registered = context.customComponents.get(node.name);
   if (registered === undefined) {
     return fallbackResult(node, `custom component "${node.name}" is not registered`);
   }
@@ -83,28 +83,20 @@ function buildCustomContext(
   };
 }
 
-/** Top-level Block Kit block types Slack accepts; an unknown `type` is rejected before post. */
-const KNOWN_BLOCK_TYPES: ReadonlySet<string> = new Set([
-  'actions',
-  'context',
-  'divider',
-  'file',
-  'header',
-  'image',
-  'input',
-  'rich_text',
-  'section',
-  'video',
-]);
-
-/** Every entry must be a recognised Block Kit block — a typo'd `type` degrades locally, not at post time. */
+/**
+ * Every entry must be block-shaped (an object with a string `type`). We deliberately
+ * do NOT enumerate the valid `type` values: that set lives in `@slack/types` and drifts
+ * every release, and Slack already rejects an unknown `type` at post time. This guard
+ * only catches structurally broken returns (non-arrays, strings, nulls, type-less objects)
+ * before they reach the model.
+ */
 function isBlockArray(value: unknown): value is readonly KnownBlock[] {
   return Array.isArray(value) && value.every(isBlock);
 }
 
-/** One entry is block-shaped: a non-null object whose `type` is a known Block Kit block. */
+/** One entry is block-shaped: a non-null object carrying a non-empty string `type`. */
 function isBlock(entry: unknown): boolean {
   if (typeof entry !== 'object' || entry === null) return false;
   const type = (entry as { type?: unknown }).type;
-  return typeof type === 'string' && KNOWN_BLOCK_TYPES.has(type);
+  return typeof type === 'string' && type !== '';
 }

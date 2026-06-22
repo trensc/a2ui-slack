@@ -1,4 +1,5 @@
 import type { ActionsBlock, Datepicker, InputBlock, Timepicker } from '@slack/types';
+import { inputRef } from '../../action-id/action-id-ref.js';
 import type {
   ComponentRenderer,
   DegradationReport,
@@ -66,11 +67,7 @@ function datePicker(
   node: ResolvedOf<'DateTimeInput'>,
   context: RenderContext,
 ): PickerResult {
-  const actionId = context.encodeActionId({
-    kind: 'input',
-    componentId: node.id,
-    path: node.path,
-  });
+  const actionId = context.encodeActionId(inputRef(node.id, node.path));
   const candidate = datePart(node.value);
   const initial = candidate === undefined ? undefined : normalizeDate(candidate);
   const element: Datepicker = {
@@ -88,11 +85,7 @@ function timePicker(
   node: ResolvedOf<'DateTimeInput'>,
   context: RenderContext,
 ): PickerResult {
-  const actionId = context.encodeActionId({
-    kind: 'input',
-    componentId: `${node.id}#time`,
-    path: node.path,
-  });
+  const actionId = context.encodeActionId(inputRef(`${node.id}#time`, node.path));
   const candidate = timePart(node.value, node.mode);
   const initial = candidate === undefined ? undefined : normalizeTime(candidate);
   const element: Timepicker = {

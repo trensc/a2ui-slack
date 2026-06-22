@@ -6,6 +6,8 @@ import { extractValue } from './internal/extract-value.js';
 import type { InboundElement } from './internal/extract-value.js';
 import type { CustomComponentRegistry } from '../components/custom/custom-component.js';
 
+// Re-exported as this module's public entry for `InboundElement`: cross-module
+// consumers (e.g. custom-component extractors) must not reach into `internal/`.
 export type { InboundElement } from './internal/extract-value.js';
 
 /** A `block_actions` payload: discrete element interactions in a message. */
