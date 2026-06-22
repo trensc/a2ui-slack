@@ -22,6 +22,19 @@ export type {
   RenderResult,
 } from './components/render-context.js';
 
+// custom components
+export {
+  buildCustomRegistry,
+  toComponentApi,
+} from './components/custom/custom-component.js';
+export type {
+  CustomComponent,
+  CustomComponentContext,
+  CustomComponentRegistry,
+  CustomInputSpec,
+} from './components/custom/custom-component.js';
+export { renderCustom } from './components/custom/render-custom.js';
+
 // surface
 export { resolveTree } from './surface/resolve-tree.js';
 export type { ResolveTreeInput } from './surface/resolve-tree.js';
@@ -47,6 +60,7 @@ export type {
   SlackInteractionPayload,
   ViewSubmissionPayload,
 } from './actions/interpret-payload.js';
+export type { InboundElement } from './actions/interpret-payload.js';
 
 // scheduler
 export {
