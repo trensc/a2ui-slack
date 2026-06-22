@@ -47,7 +47,9 @@ describe('buildCapabilities', () => {
   });
 
   it('is unchanged when no custom components are passed', () => {
-    expect(JSON.stringify(buildCapabilities())).toEqual(JSON.stringify(buildCapabilities([])));
+    expect(JSON.stringify(buildCapabilities())).toEqual(
+      JSON.stringify(buildCapabilities([])),
+    );
   });
 
   it('surfaces Zod .describe() text in capabilities output (Task 7 prep)', () => {
