@@ -12,10 +12,7 @@ import { buildCustomRegistry } from '../components/custom/custom-component.js';
 import type { CustomComponent } from '../components/custom/custom-component.js';
 import { assembleSurface } from '../surface/assemble-surface.js';
 import type { AssembledSurface } from '../surface/assemble-surface.js';
-import {
-  capabilitiesFromCatalog,
-  slackCatalogComponents,
-} from '../surface/capabilities.js';
+import { SLACK_CATALOG_ID, slackCatalogComponents } from '../surface/capabilities.js';
 import { resolveSurface } from '../surface/resolve-surface.js';
 import type { SurfaceKind } from '../surface/surface-target.js';
 import { InMemoryRegistryStore } from './in-memory-store.js';
@@ -69,7 +66,7 @@ export interface SlackSurface {
  */
 export function createSlackSurface(options: SlackSurfaceOptions = {}): SlackSurface {
   const store = options.store ?? new InMemoryRegistryStore();
-  const catalogId = options.catalogId ?? 'a2ui-slack';
+  const catalogId = options.catalogId ?? SLACK_CATALOG_ID;
   const keyPrefix = options.keyPrefix ?? '';
   const customRegistry = buildCustomRegistry(options.customComponents ?? []);
   const catalogComponents = slackCatalogComponents(customRegistry);
@@ -79,8 +76,11 @@ export function createSlackSurface(options: SlackSurfaceOptions = {}): SlackSurf
   const keyFor = (surfaceId: string): string => `${keyPrefix}${surfaceId}`;
 
   return {
-    // Reuse the registry built above — no second buildCustomRegistry/validation pass.
-    capabilities: capabilitiesFromCatalog(catalogComponents),
+    // Advertise the SAME processor/catalog the host validates against, so the
+    // catalog id the agent is told about always matches the id its messages must
+    // target — even when `catalogId` is overridden. (Also avoids spinning up a
+    // second throwaway MessageProcessor just for capabilities.)
+    capabilities: processor.getClientCapabilities({ includeInlineCatalogs: true }),
 
     async render(surfaceId, messages, surfaceKind = 'message') {
       processor.processMessages(messages);

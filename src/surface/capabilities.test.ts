@@ -32,6 +32,12 @@ describe('buildCapabilities', () => {
     expect(buildCapabilities()).toEqual(buildCapabilities());
   });
 
+  it('advertises under a custom catalogId when one is passed', () => {
+    const caps = buildCapabilities([], 'custom-cat');
+    expect(caps['v0.9'].supportedCatalogIds).toContain('custom-cat');
+    expect(caps['v0.9'].inlineCatalogs?.[0]?.catalogId).toBe('custom-cat');
+  });
+
   it('advertises registered custom components inline alongside the basic catalog', () => {
     const caps = buildCapabilities([
       {

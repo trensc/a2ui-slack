@@ -45,8 +45,9 @@ export function slackCatalogComponents(custom: CustomComponentRegistry): Compone
  */
 export function capabilitiesFromCatalog(
   components: readonly ComponentApi[],
+  catalogId: string = SLACK_CATALOG_ID,
 ): A2uiClientCapabilities {
-  const catalog = new Catalog(SLACK_CATALOG_ID, [...components]);
+  const catalog = new Catalog(catalogId, [...components]);
   const processor = new MessageProcessor([catalog]);
   return processor.getClientCapabilities({ includeInlineCatalogs: true });
 }
@@ -55,12 +56,16 @@ export function capabilitiesFromCatalog(
  * Build the v0.9 `a2uiClientCapabilities` advertising a REDUCED inline catalog
  * (see {@link slackCatalogComponents}). Custom components are validated through
  * {@link buildCustomRegistry} first, so a reserved/duplicate name fails here with
- * an actionable error rather than producing an ambiguous catalog. Standalone entry
- * point; a host with a pre-built registry calls {@link capabilitiesFromCatalog} directly.
+ * an actionable error rather than producing an ambiguous catalog. Pass `catalogId`
+ * to advertise the catalog under a non-default id (it must match the id the
+ * consumer's `MessageProcessor` registers, or the agent's messages won't resolve).
+ * Standalone entry point; a host with a pre-built registry calls
+ * {@link capabilitiesFromCatalog} directly.
  */
 export function buildCapabilities(
   customComponents: readonly CustomComponent[] = [],
+  catalogId: string = SLACK_CATALOG_ID,
 ): A2uiClientCapabilities {
   const registry = buildCustomRegistry(customComponents);
-  return capabilitiesFromCatalog(slackCatalogComponents(registry));
+  return capabilitiesFromCatalog(slackCatalogComponents(registry), catalogId);
 }

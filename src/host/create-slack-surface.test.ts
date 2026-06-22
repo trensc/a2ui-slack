@@ -209,6 +209,14 @@ describe('createSlackSurface with custom components', () => {
     expect(JSON.stringify(surface.capabilities)).toContain('ApprovalCard');
   });
 
+  it('advertises capabilities under the configured catalogId, not the default', () => {
+    const surface = createSlackSurface({ catalogId: 'custom-cat' });
+    expect(surface.capabilities['v0.9'].supportedCatalogIds).toContain('custom-cat');
+    expect(surface.capabilities['v0.9'].inlineCatalogs?.[0]?.catalogId).toBe(
+      'custom-cat',
+    );
+  });
+
   it('runs the per-param extractor on the inbound path', async () => {
     const surface = createSlackSurface({ customComponents: [approvalCard] });
     const { blocks } = await surface.render('cc', customMessages);
