@@ -110,6 +110,8 @@ describe('renderCustom', () => {
       componentId: 'c',
       fidelity: 'dropped',
     });
+    expect(result.degradations[0]?.reason).toContain('render of "Boom" threw');
+    expect(result.degradations[0]?.reason).toContain('kaboom');
     expect(result.blocks).toHaveLength(1); // fallback block
   });
 
@@ -136,6 +138,9 @@ describe('renderCustom', () => {
     };
     const result = renderCustom(typoNode, ctx({ customComponents: reg }));
     expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toContain(
+      'ctx.input: "coment" is not a declared input of "Typo"',
+    );
   });
 
   it('degrades when ctx.action names an undeclared param (symmetric with ctx.input)', () => {
@@ -164,10 +169,10 @@ describe('renderCustom', () => {
       actions: { go: 'run' },
       inputs: {},
     };
-    expect(renderCustom(n, ctx({ customComponents: reg })).degradations[0]).toMatchObject(
-      {
-        fidelity: 'dropped',
-      },
+    const result = renderCustom(n, ctx({ customComponents: reg }));
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toContain(
+      'ctx.action: "g0" is not a declared action of "ActTypo"',
     );
   });
 
@@ -181,9 +186,11 @@ describe('renderCustom', () => {
       actions: {},
       inputs: {},
     };
-    expect(
-      renderCustom(badNode, ctx({ customComponents: bad })).degradations[0],
-    ).toMatchObject({ fidelity: 'dropped' });
+    const result = renderCustom(badNode, ctx({ customComponents: bad }));
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toContain(
+      'render of "Bad" did not return Block Kit blocks',
+    );
   });
 
   it('degrades when an entry is an object without a string type (kills the isBlock sub-mutant)', () => {
@@ -209,6 +216,54 @@ describe('renderCustom', () => {
     const orphan: ResolvedOf<'Custom'> = { ...node, name: 'Ghost' };
     const result = renderCustom(orphan, ctx({ customComponents: new Map() }));
     expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toBe(
+      'custom component "Ghost" is not registered',
+    );
+  });
+
+  it('degrades when only SOME entries are blocks (a valid block mixed with a bad one)', () => {
+    // A mix forces `.every` (all entries must be blocks) over `.some` — with `.some`
+    // the array would wrongly pass on the strength of the one valid block.
+    const mixed = buildCustomRegistry([
+      {
+        name: 'Mixed',
+        schema: z.object({}),
+        render: () =>
+          [
+            { type: 'section', text: { type: 'mrkdwn', text: 'ok' } },
+            'nope' as unknown as never,
+          ] as KnownBlock[],
+      },
+    ]);
+    const mixedNode: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'Mixed',
+      actions: {},
+      inputs: {},
+    };
+    const result = renderCustom(mixedNode, ctx({ customComponents: mixed }));
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toContain('did not return Block Kit blocks');
+  });
+
+  it('degrades (not throws) when render returns a null entry', () => {
+    // A `null` entry must be rejected by the structural guard, not crash isBlock —
+    // distinguishes the `entry !== null` check from an always-true mutant.
+    const nullish = buildCustomRegistry([
+      {
+        name: 'Nullish',
+        schema: z.object({}),
+        render: () => [null as unknown as never],
+      },
+    ]);
+    const nullNode: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'Nullish',
+      actions: {},
+      inputs: {},
+    };
+    const result = renderCustom(nullNode, ctx({ customComponents: nullish }));
+    expect(result.degradations[0]?.reason).toContain('did not return Block Kit blocks');
   });
 
   it('encodes an action ref without action field when node.actions has no value for the param', () => {
