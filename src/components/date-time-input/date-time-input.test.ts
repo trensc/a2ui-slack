@@ -188,6 +188,183 @@ describe('renderDateTimeInput', () => {
     expect(degradations[0]?.fidelity).toBe('partial');
   });
 
+  it('time mode strips seconds from the initial value', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'time', value: '13:37:00' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBe('13:37');
+    expect(degradations).toEqual([]);
+  });
+
+  it('time mode strips a timezone suffix from the initial value', () => {
+    const { blocks } = renderDateTimeInput(
+      node({ mode: 'time', value: '13:37:00Z' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBe('13:37');
+  });
+
+  it('time mode pads a single-digit hour', () => {
+    const { blocks } = renderDateTimeInput(
+      node({ mode: 'time', value: '9:05' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBe('09:05');
+  });
+
+  it('time mode drops an out-of-range time and reports it', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'time', value: '99:99' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBeUndefined();
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]).toMatchObject({
+      componentId: 'dt1',
+      componentType: 'DateTimeInput',
+      fidelity: 'partial',
+    });
+    expect(degradations[0]?.reason).toContain('99:99');
+  });
+
+  it('date mode drops a non-ISO date and reports it', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ value: '28-04-1990' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'datepicker') {
+      throw new Error('expected datepicker');
+    }
+    expect(block.elements[0].initial_date).toBeUndefined();
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]?.reason).toContain('28-04-1990');
+  });
+
+  it('date mode drops an out-of-range month and reports it', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ value: '1990-13-01' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'datepicker') {
+      throw new Error('expected datepicker');
+    }
+    expect(block.elements[0].initial_date).toBeUndefined();
+    expect(degradations).toHaveLength(1);
+  });
+
+  it('date mode reports a value with no date shape at all', () => {
+    const { degradations } = renderDateTimeInput(
+      node({ value: 'garbage' }),
+      context('message'),
+    );
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]?.reason).toContain('garbage');
+  });
+
+  it('datetime mode normalizes a full ISO timestamp without extra reports', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'datetime', value: '2026-06-05T14:30:00+02:00' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions') throw new Error('expected actions');
+    if (block.elements[0]?.type !== 'datepicker') throw new Error('expected datepicker');
+    if (block.elements[1]?.type !== 'timepicker') throw new Error('expected timepicker');
+    expect(block.elements[0].initial_date).toBe('2026-06-05');
+    expect(block.elements[1].initial_time).toBe('14:30');
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]?.reason).toContain('split');
+  });
+
+  it('time mode keeps the 23:59 boundary', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'time', value: '23:59' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBe('23:59');
+    expect(degradations).toEqual([]);
+  });
+
+  it('time mode drops out-of-range minutes and reports it', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'time', value: '13:99' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBeUndefined();
+    expect(degradations).toHaveLength(1);
+  });
+
+  it('datetime mode tolerates a time-only value with a leading T', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'datetime', value: 'T14:30' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions') throw new Error('expected actions');
+    if (block.elements[0]?.type !== 'datepicker') throw new Error('expected datepicker');
+    if (block.elements[1]?.type !== 'timepicker') throw new Error('expected timepicker');
+    expect(block.elements[0].initial_date).toBeUndefined();
+    expect(block.elements[1].initial_time).toBe('14:30');
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]?.reason).toContain('split');
+  });
+
+  it('datetime mode tolerates a trailing T with no time portion', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'datetime', value: '2026-06-05T' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions') throw new Error('expected actions');
+    if (block.elements[0]?.type !== 'datepicker') throw new Error('expected datepicker');
+    if (block.elements[1]?.type !== 'timepicker') throw new Error('expected timepicker');
+    expect(block.elements[0].initial_date).toBe('2026-06-05');
+    expect(block.elements[1].initial_time).toBeUndefined();
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]?.reason).toContain('split');
+  });
+
+  it('time mode drops a value with no time shape at all and reports it', () => {
+    const { blocks, degradations } = renderDateTimeInput(
+      node({ mode: 'time', value: 'garbage' }),
+      context('message'),
+    );
+    const [block] = blocks;
+    if (block?.type !== 'actions' || block.elements[0]?.type !== 'timepicker') {
+      throw new Error('expected timepicker');
+    }
+    expect(block.elements[0].initial_time).toBeUndefined();
+    expect(degradations).toHaveLength(1);
+    expect(degradations[0]?.reason).toContain('garbage');
+  });
+
   it('round-trips the date picker path through the real codec', () => {
     const path = '/events/0/at~1z|q';
     let registry = emptyRegistry;
