@@ -1,7 +1,12 @@
 import { decodeActionId } from '../action-id/action-id.js';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import type { ActionIdRef } from '../action-id/action-id-ref.js';
-import type { InboundEffect, InboundResult, JsonValue } from './inbound-effect.js';
+import type {
+  InboundDiagnostic,
+  InboundEffect,
+  InboundResult,
+  JsonValue,
+} from './inbound-effect.js';
 import { extractValue } from './internal/extract-value.js';
 import type { InboundElement } from './internal/extract-value.js';
 import type { CustomComponentRegistry } from '../components/custom/custom-component.js';
@@ -44,22 +49,32 @@ export function interpretPayload(
   registry: TokenRegistry,
   custom?: CustomComponentRegistry,
 ): InboundResult {
+  const diagnostics: InboundDiagnostic[] = [];
   const effects =
     payload.type === 'view_submission'
-      ? fromViewSubmission(payload, registry, custom)
-      : fromBlockActions(payload, registry, custom);
-  return { effects, diagnostics: [] };
+      ? fromViewSubmission(payload, registry, custom, diagnostics)
+      : fromBlockActions(payload, registry, custom, diagnostics);
+  return { effects, diagnostics };
 }
 
 function fromBlockActions(
   payload: BlockActionsPayload,
   registry: TokenRegistry,
-  custom?: CustomComponentRegistry,
+  custom: CustomComponentRegistry | undefined,
+  diagnostics: InboundDiagnostic[],
 ): readonly InboundEffect[] {
   const setData: InboundEffect[] = [];
   const fireAction: InboundEffect[] = [];
   for (const element of payload.actions) {
-    addEffect(element.action_id ?? '', element, registry, setData, fireAction, custom);
+    addEffect(
+      element.action_id ?? '',
+      element,
+      registry,
+      setData,
+      fireAction,
+      custom,
+      diagnostics,
+    );
   }
   return [...setData, ...fireAction];
 }
@@ -72,12 +87,13 @@ function fromBlockActions(
 function fromViewSubmission(
   payload: ViewSubmissionPayload,
   registry: TokenRegistry,
-  custom?: CustomComponentRegistry,
+  custom: CustomComponentRegistry | undefined,
+  diagnostics: InboundDiagnostic[],
 ): readonly InboundEffect[] {
   const setData: InboundEffect[] = [];
   for (const elements of Object.values(payload.view.state.values)) {
     for (const [actionId, element] of Object.entries(elements)) {
-      addEffect(actionId, element, registry, setData, [], custom);
+      addEffect(actionId, element, registry, setData, [], custom, diagnostics);
     }
   }
   return setData;
@@ -90,7 +106,8 @@ function addEffect(
   registry: TokenRegistry,
   setData: InboundEffect[],
   fireAction: InboundEffect[],
-  custom?: CustomComponentRegistry,
+  custom: CustomComponentRegistry | undefined,
+  diagnostics: InboundDiagnostic[],
 ): void {
   const decoded = decodeActionId(actionId, registry);
   if (!decoded.ok) return;
@@ -101,7 +118,7 @@ function addEffect(
   }
   // Explicit branch (NOT `??`): a custom extractor returning `null` is an intentional
   // "cleared" value and must be kept, not fall through to the built-in extractor.
-  const fromCustom = customExtract(ref, element, custom);
+  const fromCustom = customExtract(ref, element, custom, diagnostics);
   const value = fromCustom !== undefined ? fromCustom : extractValue(element);
   // `path` is `undefined` (no write target) or `''` (literal value, no `{path}` binding):
   // both mean no write-back, so skip rather than corrupt the data-model root.
@@ -121,15 +138,15 @@ function toFireAction(ref: ActionIdRef): InboundEffect {
 
 /**
  * Resolve a custom per-param extractor for this ref, if one is registered.
- * Integrator code (`extract`) is sandboxed: a throw is caught and treated as
- * `undefined` (defer to the built-in extractor) so one buggy extractor can never
- * crash the whole inbound decode. The decode path has no degradation channel, so
- * the failure is silent here — surface it via the host if observability is needed.
+ * Integrator code (`extract`) is sandboxed: a throw is caught, recorded as an
+ * `extractorThrew` diagnostic, and treated as `undefined` (defer to the built-in
+ * extractor) so one buggy extractor can never crash the whole inbound decode.
  */
 function customExtract(
   ref: ActionIdRef,
   element: InboundElement,
-  custom?: CustomComponentRegistry,
+  custom: CustomComponentRegistry | undefined,
+  diagnostics: InboundDiagnostic[],
 ): JsonValue | undefined {
   if (ref.custom === undefined || custom === undefined) return undefined;
   const extractor = custom.get(ref.custom.component)?.component.inputs?.[ref.custom.param]
@@ -137,7 +154,15 @@ function customExtract(
   if (extractor === undefined) return undefined;
   try {
     return extractor(element);
-  } catch {
+  } catch (error) {
+    diagnostics.push({
+      kind: 'extractorThrew',
+      surfaceId: ref.surfaceId,
+      componentId: ref.componentId,
+      ...(ref.path !== undefined ? { path: ref.path } : {}),
+      custom: { component: ref.custom.component, param: ref.custom.param },
+      reason: `custom extractor "${ref.custom.component}.${ref.custom.param}" threw: ${String(error)}`,
+    });
     return undefined;
   }
 }

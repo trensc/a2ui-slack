@@ -338,6 +338,15 @@ describe('custom-aware inbound', () => {
     expect(run().effects).toEqual([
       { kind: 'setData', surfaceId: 's', path: '/v', value: 'survives' },
     ]);
+    const [diag] = run().diagnostics;
+    expect(diag).toMatchObject({
+      kind: 'extractorThrew',
+      surfaceId: 's',
+      componentId: 'c',
+      path: '/v',
+      custom: { component: 'Throwing', param: 'val' },
+    });
+    expect(diag?.reason).toContain('boom');
   });
 
   it('falls back to built-in extractor when ref has custom marker but no custom registry provided', () => {
@@ -394,6 +403,101 @@ describe('custom-aware inbound', () => {
     expect(effects).toEqual([
       { kind: 'setData', surfaceId: 's', path: '/value', value: 'builtin' },
     ]);
+  });
+
+  it('emits an extractorThrew diagnostic without a path field when the ref carries no path', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'PathlessThrower',
+        schema: z.object({ val: z.unknown() }),
+        inputs: {
+          val: {
+            extract: () => {
+              throw new Error('no-path-boom');
+            },
+          },
+        },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      // No path in the ref — covers the `ref.path === undefined` branch in the
+      // conditional spread inside `customExtract`.
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        custom: { component: 'PathlessThrower', param: 'val' },
+      },
+      emptyRegistry,
+    );
+    const result = interpretPayload(
+      {
+        type: 'block_actions',
+        actions: [{ type: 'rich_text_input', action_id: enc.id }],
+      },
+      enc.registry,
+      custom,
+    );
+    expect(result.effects).toEqual([]);
+    const [diag] = result.diagnostics;
+    expect(diag).toMatchObject({
+      kind: 'extractorThrew',
+      surfaceId: 's',
+      componentId: 'c',
+      custom: { component: 'PathlessThrower', param: 'val' },
+    });
+    // No `path` field on the diagnostic when ref.path is undefined.
+    expect(diag).not.toHaveProperty('path');
+    expect(diag?.reason).toContain('no-path-boom');
+  });
+
+  it('emits an extractorThrew diagnostic when a custom extractor throws on a non-standard element (write is lost)', () => {
+    const custom = buildCustomRegistry([
+      {
+        name: 'Widget',
+        schema: z.object({ val: z.object({ path: z.string() }) }),
+        inputs: {
+          val: {
+            extract: () => {
+              throw new Error('boom');
+            },
+          },
+        },
+        render: () => [],
+      },
+    ]);
+    const enc = encodeActionId(
+      {
+        kind: 'input',
+        surfaceId: 's',
+        componentId: 'c',
+        path: '/v',
+        custom: { component: 'Widget', param: 'val' },
+      },
+      emptyRegistry,
+    );
+    const result = interpretPayload(
+      {
+        type: 'block_actions',
+        // 'rich_text_input' is absent from EXTRACTORS → built-in fallback yields undefined.
+        actions: [{ type: 'rich_text_input', action_id: enc.id }],
+      },
+      enc.registry,
+      custom,
+    );
+    // The write is lost (no built-in can extract it)…
+    expect(result.effects).toEqual([]);
+    // …but it is no longer silent.
+    const [diag] = result.diagnostics;
+    expect(diag).toMatchObject({
+      kind: 'extractorThrew',
+      surfaceId: 's',
+      componentId: 'c',
+      path: '/v',
+      custom: { component: 'Widget', param: 'val' },
+    });
+    expect(diag?.reason).toContain('boom');
   });
 
   it('falls back to built-in extractor when custom component has no inputs for the param', () => {
