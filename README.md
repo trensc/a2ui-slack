@@ -88,7 +88,8 @@ When a user clicks a button or submits an input, Slack sends you an interaction 
 
 ```ts
 // In your Slack action handler:
-const effects = await surface.inbound(surfaceId, payload);
+// `diagnostics` carries any decode-time issues (e.g. a custom extractor that threw).
+const { effects, diagnostics } = await surface.inbound(surfaceId, payload);
 
 for (const effect of effects) {
   if (effect.kind === 'fireAction') {

@@ -551,7 +551,7 @@ describe('interpretPayload — view_submission', () => {
       path: '/age',
     };
     const t = tokens([nameRef, ageRef]);
-    const { effects } = interpretPayload(
+    const { effects, diagnostics } = interpretPayload(
       {
         type: 'view_submission',
         view: {
@@ -569,6 +569,7 @@ describe('interpretPayload — view_submission', () => {
       { kind: 'setData', surfaceId: 's1', path: '/name', value: 'Ada' },
       { kind: 'setData', surfaceId: 's1', path: '/age', value: '36' },
     ]);
+    expect(diagnostics).toEqual([]);
   });
 
   it('skips undecodable entries in a view submission', () => {
