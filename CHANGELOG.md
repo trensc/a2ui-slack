@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are re-exported from the package root so custom-component prop schemas can be
   built from a single import, against the same zod instance web_core validates with.
 
+### Changed
+
+- **Inbound decode retourne un résultat structuré** - `interpretPayload` et
+  `SlackSurface.inbound` retournent désormais `InboundResult { effects, diagnostics }`
+  au lieu d'un `InboundEffect[]`, en miroir de `RenderResult { blocks, degradations }`.
+  Le champ `diagnostics` signale un extracteur custom qui a throw (auparavant
+  silencieusement avalé). Migration : lire `.effects` (ex. `const { effects } = await
+surface.inbound(id, payload)`). BREAKING (pré-1.0).
+
 ### Fixed
 
 - **Capabilities catalog id** - `createSlackSurface` advertised capabilities under
