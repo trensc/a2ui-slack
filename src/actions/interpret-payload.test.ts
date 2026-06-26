@@ -338,6 +338,7 @@ describe('custom-aware inbound', () => {
     expect(run().effects).toEqual([
       { kind: 'setData', surfaceId: 's', path: '/v', value: 'survives' },
     ]);
+    expect(run().diagnostics).toHaveLength(1);
     const [diag] = run().diagnostics;
     expect(diag).toMatchObject({
       kind: 'extractorThrew',
@@ -440,6 +441,7 @@ describe('custom-aware inbound', () => {
       custom,
     );
     expect(result.effects).toEqual([]);
+    expect(result.diagnostics).toHaveLength(1);
     const [diag] = result.diagnostics;
     expect(diag).toMatchObject({
       kind: 'extractorThrew',
@@ -489,6 +491,7 @@ describe('custom-aware inbound', () => {
     // The write is lost (no built-in can extract it)…
     expect(result.effects).toEqual([]);
     // …but it is no longer silent.
+    expect(result.diagnostics).toHaveLength(1);
     const [diag] = result.diagnostics;
     expect(diag).toMatchObject({
       kind: 'extractorThrew',
