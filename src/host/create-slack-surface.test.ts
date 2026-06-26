@@ -299,6 +299,8 @@ describe('createSlackSurface with custom components', () => {
     expect(result.diagnostics).toHaveLength(1);
     expect(result.diagnostics[0]).toMatchObject({
       kind: 'extractorThrew',
+      surfaceId: 'w1',
+      componentId: 'root',
       custom: { component: 'Widget', param: 'val' },
     });
   });
