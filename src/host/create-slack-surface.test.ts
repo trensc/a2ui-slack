@@ -127,7 +127,7 @@ describe('createSlackSurface.inbound', () => {
       type: 'block_actions',
       actions: [{ type: 'button', action_id: actionId ?? '' }],
     };
-    const effects = await surface.inbound('s1', payload);
+    const { effects } = await surface.inbound('s1', payload);
     expect(effects).toEqual([
       { kind: 'fireAction', surfaceId: 's1', componentId: 'btn' },
     ]);
@@ -139,7 +139,7 @@ describe('createSlackSurface.inbound', () => {
       type: 'block_actions',
       actions: [{ type: 'button', action_id: 'UNKNOWN' }],
     };
-    expect(await surface.inbound('never-rendered', payload)).toEqual([]);
+    expect((await surface.inbound('never-rendered', payload)).effects).toEqual([]);
   });
 });
 
@@ -232,7 +232,7 @@ describe('createSlackSurface with custom components', () => {
         { type: 'plain_text_input', action_id: actionId ?? '', value: 'raw typed' },
       ],
     };
-    const effects = await surface.inbound('cc', payload);
+    const { effects } = await surface.inbound('cc', payload);
     expect(effects).toEqual([
       { kind: 'setData', surfaceId: 'cc', path: '/note', value: 'EXTRACTED' },
     ]);
@@ -243,5 +243,63 @@ describe('createSlackSurface with custom components', () => {
     expect(() => createSlackSurface({ customComponents: [clash] })).toThrow(
       /built-in|reserved|Button/i,
     );
+  });
+
+  it('surfaces a throwing custom extractor as a diagnostic through inbound()', async () => {
+    const widget: CustomComponent = {
+      name: 'Widget',
+      schema: z.object({ val: z.object({ path: z.string() }) }),
+      inputs: {
+        val: {
+          extract: () => {
+            throw new Error('boom');
+          },
+        },
+      },
+      render: (_p, c) => [
+        {
+          type: 'input',
+          block_id: 'w-val',
+          label: { type: 'plain_text', text: 'Val' },
+          element: { type: 'plain_text_input', action_id: c.input('val') },
+        },
+      ],
+    };
+    const surface = createSlackSurface({ customComponents: [widget] });
+    const widgetMessages: A2uiMessage[] = [
+      { version: 'v0.9', createSurface: { surfaceId: 'w1', catalogId: 'a2ui-slack' } },
+      {
+        version: 'v0.9',
+        updateComponents: {
+          surfaceId: 'w1',
+          components: [
+            {
+              component: 'Widget',
+              id: 'root',
+              val: { path: '/v' },
+            },
+          ],
+        },
+      },
+    ];
+    const { blocks } = await surface.render('w1', widgetMessages);
+    const inputBlock = blocks.find((b): b is InputBlock => b.type === 'input');
+    const actionId =
+      inputBlock && 'action_id' in inputBlock.element
+        ? inputBlock.element.action_id
+        : undefined;
+    expect(actionId).toBeTypeOf('string');
+    const payload: SlackInteractionPayload = {
+      type: 'block_actions',
+      actions: [
+        { type: 'plain_text_input', action_id: actionId ?? '', value: 'user input' },
+      ],
+    };
+    const result = await surface.inbound('w1', payload);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toMatchObject({
+      kind: 'extractorThrew',
+      custom: { component: 'Widget', param: 'val' },
+    });
   });
 });

@@ -7,7 +7,7 @@ import type {
 import { emptyRegistry } from '../action-id/action-id.js';
 import { interpretPayload } from '../actions/interpret-payload.js';
 import type { SlackInteractionPayload } from '../actions/interpret-payload.js';
-import type { InboundEffect } from '../actions/inbound-effect.js';
+import type { InboundResult } from '../actions/inbound-effect.js';
 import { buildCustomRegistry } from '../components/custom/custom-component.js';
 import type { CustomComponent } from '../components/custom/custom-component.js';
 import { assembleSurface } from '../surface/assemble-surface.js';
@@ -49,11 +49,8 @@ export interface SlackSurface {
     messages: A2uiMessage[],
     surfaceKind?: SurfaceKind,
   ): Promise<AssembledSurface>;
-  /** Decode a Slack interaction payload into pure [[InboundEffect]]s. */
-  inbound(
-    surfaceId: string,
-    payload: SlackInteractionPayload,
-  ): Promise<readonly InboundEffect[]>;
+  /** Decode a Slack interaction payload into an InboundResult (pure effects + decode diagnostics). */
+  inbound(surfaceId: string, payload: SlackInteractionPayload): Promise<InboundResult>;
 }
 
 /**
@@ -105,7 +102,7 @@ export function createSlackSurface(options: SlackSurfaceOptions = {}): SlackSurf
 
     async inbound(surfaceId, payload) {
       const registry = (await store.get(keyFor(surfaceId))) ?? emptyRegistry;
-      return interpretPayload(payload, registry, customRegistry).effects;
+      return interpretPayload(payload, registry, customRegistry);
     },
   };
 }
