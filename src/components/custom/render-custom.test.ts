@@ -313,6 +313,51 @@ describe('renderCustom', () => {
     expect(result.degradations[0]?.reason).toBe(
       'custom component "Ghost" is not registered',
     );
+    // The user-visible fallback names the custom component, not the opaque 'Custom' type.
+    const text = (result.blocks[0] as { text?: { text?: string } }).text?.text;
+    expect(text).toBe('`Ghost` not supported');
+  });
+
+  it('degrades (not throws) when the context omits the optional custom registry', () => {
+    // RenderContext.customComponents is optional; a hand-built context may omit the
+    // field entirely, in which case any Custom node degrades to its "not registered"
+    // fallback. This compiles only because the field is optional (finding #7).
+    const bare: RenderContext = {
+      surfaceKind: 'message',
+      renderChild: () => ({ blocks: [], degradations: [] }),
+      encodeActionId: () => 't|0',
+    };
+    const result = renderCustom(node, bare);
+    expect(result.degradations[0]).toMatchObject({ fidelity: 'dropped' });
+    expect(result.degradations[0]?.reason).toBe(
+      'custom component "ApprovalCard" is not registered',
+    );
+  });
+
+  it('keeps degradations with distinct reasons separate (collision-safe dedup key)', () => {
+    // Two unbound inputs produce two DIFFERENT partial reasons; the array-based dedup
+    // key must keep them apart (guards against a regression to a fragile string join).
+    const reg = buildCustomRegistry([
+      {
+        name: 'TwoInputs',
+        schema: z.object({ a: z.unknown().optional(), b: z.unknown().optional() }),
+        inputs: { a: {}, b: {} },
+        render: (_p, c) =>
+          [
+            { type: 'section', text: { type: 'mrkdwn', text: c.input('a') } },
+            { type: 'section', text: { type: 'mrkdwn', text: c.input('b') } },
+          ] as KnownBlock[],
+      },
+    ]);
+    const n: ResolvedOf<'Custom'> = {
+      ...node,
+      name: 'TwoInputs',
+      actions: {},
+      inputs: { a: '', b: '' },
+    };
+    const result = renderCustom(n, ctx({ customComponents: reg }));
+    const partials = result.degradations.filter((d) => d.fidelity === 'partial');
+    expect(partials).toHaveLength(2);
   });
 
   it('degrades when only SOME entries are blocks (a valid block mixed with a bad one)', () => {

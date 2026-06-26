@@ -41,8 +41,14 @@ export interface RenderContext {
   readonly encodeActionId: (ref: PartialActionIdRef) => string;
   /** The Slack surface kind this tree is being rendered into. */
   readonly surfaceKind: SurfaceKind;
-  /** Registered custom components, looked up by name during dispatch. Always set (empty when none); the surface layer defaults it. */
-  readonly customComponents: CustomComponentRegistry;
+  /**
+   * Registered custom components, looked up by name during dispatch. Optional: the
+   * surface layer always sets it (empty when none), so internally it is never absent.
+   * A hand-built context (e.g. an external consumer unit-testing one renderer) may
+   * omit it — a `Custom` node then degrades to its "not registered" fallback rather
+   * than the field being a compile-time requirement on this public type.
+   */
+  readonly customComponents?: CustomComponentRegistry;
 }
 
 /** The signature every `src/components/<name>/<name>.ts` entry implements. */
