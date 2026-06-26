@@ -13,6 +13,7 @@ import type {
   RenderResult,
 } from '../render-context.js';
 import type { ChoiceOption, ResolvedOf } from '../resolved-component.js';
+import { inputRef } from '../../action-id/action-id-ref.js';
 import { clip } from '../../limits/clip.js';
 import {
   OPTION_TEXT_MAX,
@@ -34,11 +35,7 @@ type ValuedOption = PlainTextOption & { readonly value: string };
  */
 export const renderChoicePicker: ComponentRenderer<'ChoicePicker'> = (node, context) => {
   if (node.options.length === 0) return emptyResult(node);
-  const actionId = context.encodeActionId({
-    kind: 'input',
-    componentId: node.id,
-    path: node.path,
-  });
+  const actionId = context.encodeActionId(inputRef(node.id, node.path));
   const kept = node.options.slice(0, SELECT_OPTION_MAX);
   const options = kept.map(toOption);
   const element = buildElement(node, actionId, kept.length, options);

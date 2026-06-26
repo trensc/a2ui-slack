@@ -102,3 +102,27 @@ describe('encodeActionId / decodeActionId', () => {
     });
   });
 });
+
+describe('action ref extensions', () => {
+  it('dedupes by action value and custom marker', () => {
+    const base = { kind: 'action' as const, surfaceId: 's', componentId: 'c' };
+    const first = encodeActionId({ ...base, action: 'approve' }, emptyRegistry);
+    const same = encodeActionId({ ...base, action: 'approve' }, first.registry);
+    const other = encodeActionId({ ...base, action: 'reject' }, first.registry);
+    expect(same.id).toBe(first.id); // identical ref → same token
+    expect(other.id).not.toBe(first.id); // different action value → new token
+  });
+
+  it('round-trips action value and custom marker', () => {
+    const ref = {
+      kind: 'input' as const,
+      surfaceId: 's',
+      componentId: 'c',
+      path: '/x',
+      custom: { component: 'ApprovalCard', param: 'comment' },
+    };
+    const { id, registry } = encodeActionId(ref, emptyRegistry);
+    const decoded = decodeActionId(id, registry);
+    expect(decoded.ok && decoded.ref.custom?.param).toBe('comment');
+  });
+});

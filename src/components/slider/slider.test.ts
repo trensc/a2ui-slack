@@ -14,6 +14,7 @@ function context(surfaceKind: RenderContext['surfaceKind']): RenderContext {
     renderChild: () => ({ blocks: [], degradations: [] }),
     encodeActionId: (ref) => `id|${ref.kind}|${ref.componentId}|${ref.path ?? ''}`,
     surfaceKind,
+    customComponents: new Map(),
   };
 }
 
@@ -145,6 +146,7 @@ describe('renderSlider', () => {
         return result.id;
       },
       surfaceKind: 'message',
+      customComponents: new Map(),
     };
     const { blocks } = renderSlider(node({ path }), context);
     const [block] = blocks;

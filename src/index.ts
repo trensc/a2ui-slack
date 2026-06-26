@@ -22,6 +22,26 @@ export type {
   RenderResult,
 } from './components/render-context.js';
 
+// custom components
+export {
+  buildCustomRegistry,
+  toComponentApi,
+} from './components/custom/custom-component.js';
+export type {
+  CustomComponent,
+  CustomComponentContext,
+  CustomComponentRegistry,
+  CustomInputSpec,
+} from './components/custom/custom-component.js';
+
+// schema authoring for custom-component props — re-exported so an integrator can
+// build catalog-bindable schemas from a single import. `ActionSchema` is the
+// A2UI v0.9 Action shape ({event:{name}} / {functionCall}); `DynamicStringSchema`
+// the {path} write-back union. `z` is the SAME zod instance web_core validates
+// with, so authored schemas interop with the inline catalog.
+export { z } from 'zod';
+export { ActionSchema, DynamicStringSchema } from '@a2ui/web_core/v0_9';
+
 // surface
 export { resolveTree } from './surface/resolve-tree.js';
 export type { ResolveTreeInput } from './surface/resolve-tree.js';
@@ -40,7 +60,12 @@ export {
 export type { SurfaceKind, SurfaceTarget } from './surface/surface-target.js';
 
 // inbound effects
-export type { InboundEffect, JsonValue } from './actions/inbound-effect.js';
+export type {
+  InboundEffect,
+  InboundResult,
+  InboundDiagnostic,
+  JsonValue,
+} from './actions/inbound-effect.js';
 export { interpretPayload } from './actions/interpret-payload.js';
 export type {
   BlockActionsPayload,

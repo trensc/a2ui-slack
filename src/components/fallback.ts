@@ -9,9 +9,13 @@ import type { ResolvedComponent } from './resolved-component.js';
  * real renderers needing an unknown-type fallback — a degradation is never silent.
  */
 export function fallbackResult(node: ResolvedComponent, reason: string): RenderResult {
+  // A `Custom` node's `type` is always the literal 'Custom'; surface its registered
+  // `name` so a failed ApprovalCard reads "`ApprovalCard` not supported" rather than
+  // the opaque "`Custom`" every custom component would otherwise share.
+  const label = node.type === 'Custom' ? node.name : node.type;
   const block: KnownBlock = {
     type: 'section',
-    text: { type: 'mrkdwn', text: `\`${node.type}\` not supported` },
+    text: { type: 'mrkdwn', text: `\`${label}\` not supported` },
   };
   return {
     blocks: [block],

@@ -42,7 +42,14 @@ export type DecodeResult =
  * merge two refs onto one token and mis-route the interaction.
  */
 function canonicalKey(ref: ActionIdRef): string {
-  return JSON.stringify([ref.kind, ref.surfaceId, ref.componentId, ref.path ?? null]);
+  return JSON.stringify([
+    ref.kind,
+    ref.surfaceId,
+    ref.componentId,
+    ref.path ?? null,
+    ref.action ?? null,
+    ref.custom ? [ref.custom.component, ref.custom.param] : null,
+  ]);
 }
 
 /**

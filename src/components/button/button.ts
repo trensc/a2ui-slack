@@ -1,4 +1,5 @@
 import type { ActionsBlock, Button, ContextBlock, KnownBlock } from '@slack/types';
+import { actionRef } from '../../action-id/action-id-ref.js';
 import { clip } from '../../limits/clip.js';
 import type {
   ComponentRenderer,
@@ -65,7 +66,7 @@ function withAction(
   if (!node.hasServerAction) return button;
   return {
     ...button,
-    action_id: context.encodeActionId({ kind: 'action', componentId: node.id }),
+    action_id: context.encodeActionId(actionRef(node.id)),
   };
 }
 

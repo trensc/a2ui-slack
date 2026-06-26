@@ -14,6 +14,7 @@ function context(surfaceKind: RenderContext['surfaceKind']): RenderContext {
     renderChild: () => ({ blocks: [], degradations: [] }),
     encodeActionId: (ref) => `id|${ref.kind}|${ref.componentId}|${ref.path ?? ''}`,
     surfaceKind,
+    customComponents: new Map(),
   };
 }
 
@@ -138,6 +139,7 @@ describe('renderCheckBox', () => {
         return result.id;
       },
       surfaceKind: 'modal',
+      customComponents: new Map(),
     };
     const { blocks } = renderCheckBox(node({ path }), context);
     const [block] = blocks;

@@ -4,15 +4,21 @@ import type {
   ResolvedComponent,
   TextVariant,
 } from '../components/resolved-component.js';
+import type {
+  CustomComponentRegistry,
+  RegisteredComponent,
+} from '../components/custom/custom-component.js';
 import type { ResolvedTree } from './resolved-tree.js';
 import { resolveTree } from './resolve-tree.js';
 import { indexPath, resolveDataPath } from './internal/data-path.js';
 import {
+  extractActionName,
   resolveArray,
   resolveBoolean,
   resolveNumber,
   resolveString,
   resolveStringList,
+  resolveValue,
   writeBackPath,
 } from './internal/dynamic-value.js';
 
@@ -23,13 +29,19 @@ import {
  * templates into per-item instances with namespaced ids, and bridge each raw
  * component into the Slack-shaped {@link ResolvedComponent} the renderers consume.
  *
+ * Pass `custom` to enable registered custom-component resolution — unregistered
+ * types continue to emit an unsupported `Text` node as before.
+ *
  * Pure & deterministic: same surface state → same tree. Never throws — an
  * unknown component type or a missing child id becomes a visible unsupported
  * `Text` node rather than a silent drop or a crash.
  */
-export function resolveSurface(surface: SurfaceModel): ResolvedTree {
+export function resolveSurface(
+  surface: SurfaceModel,
+  custom: CustomComponentRegistry = new Map(),
+): ResolvedTree {
   const nodes: ResolvedComponent[] = [];
-  emit(surface, nodes, 'root', 'root', '/');
+  emit(surface, nodes, 'root', 'root', '/', '', custom);
   return resolveTree({ root: 'root', nodes });
 }
 
@@ -57,12 +69,16 @@ interface RawNode {
   /** Prefix applied to child output ids so template instances stay unique. */
   readonly idPrefix: string;
   readonly props: Record<string, unknown>;
+  /** Registered custom components, for the resolveNode default-case dispatch. */
+  readonly custom: CustomComponentRegistry;
 }
 
 /**
  * Resolve the component `modelId` at `basePath`, append its node (and its
  * descendants) to `nodes`, using `outputId` as the emitted id. `idPrefix` is the
  * namespace under which children are emitted (set for template instances).
+ * `custom` is the registry of registered custom components, threaded through every
+ * recursive call so the default-case dispatch has access at any depth.
  */
 function emit(
   surface: SurfaceModel,
@@ -70,7 +86,8 @@ function emit(
   modelId: string,
   outputId: string,
   basePath: string,
-  idPrefix = '',
+  idPrefix: string,
+  custom: CustomComponentRegistry,
 ): void {
   const model = surface.componentsModel.get(modelId);
   if (model === undefined) {
@@ -86,6 +103,7 @@ function emit(
     idPrefix,
     // `properties` is typed `Record<string, any>`; read it only as `unknown`.
     props: model.properties as Record<string, unknown>,
+    custom,
   };
   nodes.push(resolveNode(surface, nodes, raw));
 }
@@ -121,8 +139,17 @@ function resolveNode(
     case 'Slider':
     case 'DateTimeInput':
       return resolveInput(raw);
-    default:
-      return unsupported(raw.outputId, raw.model.type);
+    default: {
+      // The catch-all has two outcomes: a registered custom type, else unsupported.
+      // A custom name can never reach here shadowing a built-in — buildCustomRegistry
+      // rejects any name in RESERVED (derived from BASIC_COMPONENTS). A future built-in
+      // added as a named `case` above MUST also be in BASIC_COMPONENTS so RESERVED keeps
+      // covering it; the switch and the reservation list must not drift apart.
+      const registered = raw.custom.get(raw.model.type);
+      return registered === undefined
+        ? unsupported(raw.outputId, raw.model.type)
+        : resolveCustom(raw, registered);
+    }
   }
 }
 
@@ -224,7 +251,7 @@ function staticChildren(
   for (const child of children) {
     const childModelId = String(child);
     const outputId = `${raw.idPrefix}${childModelId}`;
-    emit(surface, nodes, childModelId, outputId, raw.basePath, raw.idPrefix);
+    emit(surface, nodes, childModelId, outputId, raw.basePath, raw.idPrefix, raw.custom);
     ids.push(outputId);
   }
   return ids;
@@ -260,6 +287,7 @@ function templateChildren(
       outputId,
       indexPath(arrayPath, i),
       instancePrefix,
+      raw.custom,
     );
     ids.push(outputId);
   }
@@ -277,7 +305,7 @@ function resolveCard(
 ): ResolvedComponent {
   const childModelId = String(raw.props['child']);
   const childId = `${raw.idPrefix}${childModelId}`;
-  emit(surface, nodes, childModelId, childId, raw.basePath, raw.idPrefix);
+  emit(surface, nodes, childModelId, childId, raw.basePath, raw.idPrefix, raw.custom);
   return { type: 'Card', id: raw.outputId, childId };
 }
 
@@ -291,7 +319,7 @@ function resolveTabs(
     const tab = (entry ?? {}) as { title?: unknown; child?: unknown };
     const childModelId = String(tab.child);
     const childId = `${raw.idPrefix}${childModelId}`;
-    emit(surface, nodes, childModelId, childId, raw.basePath, raw.idPrefix);
+    emit(surface, nodes, childModelId, childId, raw.basePath, raw.idPrefix, raw.custom);
     return { title: resolveString(raw.context, tab.title), childId };
   });
   // V1 TODO: tab selection is not modelled in A2UI state yet — always start on
@@ -438,4 +466,60 @@ function resolveDateTimeInput(raw: RawNode): ResolvedComponent {
     mode,
   };
   return value === '' ? base : { ...base, value };
+}
+
+// ---------------------------------------------------------------------------
+// Custom components
+// ---------------------------------------------------------------------------
+
+/** A single prop's classification: where it goes and its resolved payload. */
+type ClassifiedProp =
+  | { readonly slot: 'action'; readonly value: string }
+  | { readonly slot: 'input'; readonly path: string; readonly current: unknown }
+  | { readonly slot: 'prop'; readonly value: unknown };
+
+/** Resolve a registered custom component: generic prop resolution + callback markers. */
+function resolveCustom(raw: RawNode, registered: RegisteredComponent): ResolvedComponent {
+  const { component, actionNames, inputNames } = registered;
+  const props: Record<string, unknown> = {};
+  const actions: Record<string, string> = {};
+  const inputs: Record<string, string> = {};
+  for (const [key, rawValue] of Object.entries(raw.props)) {
+    const c = classifyProp(raw, key, rawValue, actionNames, inputNames);
+    if (c.slot === 'action') actions[key] = c.value;
+    else if (c.slot === 'input') {
+      inputs[key] = c.path;
+      props[key] = c.current;
+    } else props[key] = c.value;
+  }
+  return {
+    type: 'Custom',
+    id: raw.outputId,
+    name: component.name,
+    props,
+    actions,
+    inputs,
+  };
+}
+
+/** Classify one prop by its declared marker; an action with no resolvable `event.name` falls through to `prop` (and degrades at render when wired). */
+function classifyProp(
+  raw: RawNode,
+  key: string,
+  rawValue: unknown,
+  actionNames: ReadonlySet<string>,
+  inputNames: ReadonlySet<string>,
+): ClassifiedProp {
+  if (actionNames.has(key)) {
+    const action = extractActionName(rawValue);
+    if (action !== undefined) return { slot: 'action', value: action };
+  }
+  if (inputNames.has(key)) {
+    return {
+      slot: 'input',
+      path: writeBackPath(raw.basePath, rawValue),
+      current: resolveValue(raw.context, rawValue),
+    };
+  }
+  return { slot: 'prop', value: resolveValue(raw.context, rawValue) };
 }

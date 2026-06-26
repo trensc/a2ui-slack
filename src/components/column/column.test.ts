@@ -26,6 +26,7 @@ function contextFrom(map: Record<string, RenderResult>): RenderContext {
       },
     encodeActionId: () => 'a|c',
     surfaceKind: 'message',
+    customComponents: new Map(),
   };
 }
 
@@ -101,6 +102,7 @@ describe('renderColumn', () => {
       },
       encodeActionId: () => 'a|c',
       surfaceKind: 'message',
+      customComponents: new Map(),
     };
     const result = renderColumn(outer, context);
     expect(result.blocks).toEqual([

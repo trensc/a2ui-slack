@@ -18,6 +18,7 @@ import { renderCheckBox } from './check-box/check-box.js';
 import { renderChoicePicker } from './choice-picker/choice-picker.js';
 import { renderSlider } from './slider/slider.js';
 import { renderDateTimeInput } from './date-time-input/date-time-input.js';
+import { renderCustom } from './custom/render-custom.js';
 
 /**
  * The single exhaustive dispatch: maps a resolved component to its renderer.
@@ -25,7 +26,7 @@ import { renderDateTimeInput } from './date-time-input/date-time-input.js';
  * error, so this file is the one place the component set is enforced — and the
  * one file no component task edits (no merge conflicts on the fan-out).
  */
-// eslint-disable-next-line complexity -- exhaustive 18-way dispatch; the never default guarantees completeness at compile time.
+// eslint-disable-next-line complexity -- exhaustive 19-way dispatch; the never default guarantees completeness at compile time.
 export function renderComponent(
   node: ResolvedComponent,
   context: RenderContext,
@@ -67,6 +68,8 @@ export function renderComponent(
       return renderSlider(node, context);
     case 'DateTimeInput':
       return renderDateTimeInput(node, context);
+    case 'Custom':
+      return renderCustom(node, context);
     /* v8 ignore start -- unreachable: the never assignment makes a missing case a compile error. */
     default: {
       const _exhaustive: never = node;

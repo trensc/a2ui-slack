@@ -5,6 +5,7 @@ import type {
   RenderResult,
 } from '../render-context.js';
 import type { ResolvedOf } from '../resolved-component.js';
+import { inputRef } from '../../action-id/action-id-ref.js';
 import { clip } from '../../limits/clip.js';
 import { OPTION_TEXT_MAX } from '../../limits/clamp-options.js';
 import { INPUT_LABEL_MAX } from '../../limits/clamp-text.js';
@@ -22,11 +23,7 @@ const EMPTY_LABEL_PLACEHOLDER = 'Checkbox';
 export const renderCheckBox: ComponentRenderer<'CheckBox'> = (node, context) => {
   const wasEmpty = node.label.length === 0;
   const labelText = wasEmpty ? EMPTY_LABEL_PLACEHOLDER : node.label;
-  const actionId = context.encodeActionId({
-    kind: 'input',
-    componentId: node.id,
-    path: node.path,
-  });
+  const actionId = context.encodeActionId(inputRef(node.id, node.path));
   const element = checkbox(node, labelText, actionId);
   const degradations = wasEmpty ? [emptyLabel(node)] : [];
   return context.surfaceKind === 'message'

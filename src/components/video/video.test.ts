@@ -7,6 +7,7 @@ const context: RenderContext = {
   renderChild: () => ({ blocks: [], degradations: [] }),
   encodeActionId: () => 't|0',
   surfaceKind: 'message',
+  customComponents: new Map(),
 };
 
 function video(partial: Partial<ResolvedOf<'Video'>>): ResolvedOf<'Video'> {

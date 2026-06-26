@@ -1,7 +1,8 @@
 import type { KnownBlock } from '@slack/types';
-import type { ActionIdRef } from '../action-id/action-id-ref.js';
+import type { PartialActionIdRef } from '../action-id/action-id-ref.js';
 import type { SurfaceKind } from '../surface/surface-target.js';
 import type { ComponentType, ResolvedComponent } from './resolved-component.js';
+import type { CustomComponentRegistry } from './custom/custom-component.js';
 
 /**
  * A component that could not be mapped to Block Kit at full fidelity. Recorded,
@@ -37,9 +38,17 @@ export interface RenderContext {
    * surface layer injects `surfaceId` (a surface concern) so pure renderers stay
    * surface-agnostic — they supply only `kind`, `componentId`, and `path`.
    */
-  readonly encodeActionId: (ref: Omit<ActionIdRef, 'surfaceId'>) => string;
+  readonly encodeActionId: (ref: PartialActionIdRef) => string;
   /** The Slack surface kind this tree is being rendered into. */
   readonly surfaceKind: SurfaceKind;
+  /**
+   * Registered custom components, looked up by name during dispatch. Optional: the
+   * surface layer always sets it (empty when none), so internally it is never absent.
+   * A hand-built context (e.g. an external consumer unit-testing one renderer) may
+   * omit it — a `Custom` node then degrades to its "not registered" fallback rather
+   * than the field being a compile-time requirement on this public type.
+   */
+  readonly customComponents?: CustomComponentRegistry;
 }
 
 /** The signature every `src/components/<name>/<name>.ts` entry implements. */

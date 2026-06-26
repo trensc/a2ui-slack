@@ -29,7 +29,8 @@ export type ComponentType =
   | 'CheckBox'
   | 'ChoicePicker'
   | 'Slider'
-  | 'DateTimeInput';
+  | 'DateTimeInput'
+  | 'Custom';
 
 export type TextVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'caption' | 'body';
 
@@ -144,6 +145,17 @@ export type ResolvedComponent =
       readonly value?: string;
       readonly path: string;
       readonly mode: 'date' | 'time' | 'datetime';
+    }
+  | {
+      readonly type: 'Custom';
+      readonly id: string;
+      readonly name: string;
+      /** Everything the render fn sees: resolved non-callback props + current input values. */
+      readonly props: Readonly<Record<string, unknown>>;
+      /** action param name → resolved A2UI action value (omitted when the agent didn't supply it). */
+      readonly actions: Readonly<Record<string, string>>;
+      /** input param name → write-back JSON Pointer ('' when bound to a literal, not a {path}). */
+      readonly inputs: Readonly<Record<string, string>>;
     };
 
 /** Narrow `ResolvedComponent` to one variant — what each renderer receives. */

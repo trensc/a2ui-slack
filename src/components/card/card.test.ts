@@ -25,6 +25,7 @@ function contextFrom(map: Record<string, RenderResult>): RenderContext {
       },
     encodeActionId: () => 'a|c',
     surfaceKind: 'message',
+    customComponents: new Map(),
   };
 }
 
