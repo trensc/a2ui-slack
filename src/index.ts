@@ -60,7 +60,12 @@ export {
 export type { SurfaceKind, SurfaceTarget } from './surface/surface-target.js';
 
 // inbound effects
-export type { InboundEffect, JsonValue } from './actions/inbound-effect.js';
+export type {
+  InboundEffect,
+  InboundResult,
+  InboundDiagnostic,
+  JsonValue,
+} from './actions/inbound-effect.js';
 export { interpretPayload } from './actions/interpret-payload.js';
 export type {
   BlockActionsPayload,

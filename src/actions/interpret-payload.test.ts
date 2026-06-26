@@ -4,7 +4,7 @@ import { emptyRegistry, encodeActionId } from '../action-id/action-id.js';
 import type { ActionIdRef } from '../action-id/action-id-ref.js';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import { interpretPayload } from './interpret-payload.js';
-import type { InboundEffect } from './inbound-effect.js';
+import type { InboundResult } from './inbound-effect.js';
 import { buildCustomRegistry } from '../components/custom/custom-component.js';
 
 /** Encode refs into a registry; `id(i)` returns the i-th token id (always a string). */
@@ -33,7 +33,7 @@ const actionRef: ActionIdRef = { kind: 'action', surfaceId: 's1', componentId: '
 describe('interpretPayload — block_actions', () => {
   it('maps an input element to a setData with the decoded surface + path', () => {
     const t = tokens([inputRef]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: t.id(0), value: 'Ada' }],
@@ -47,7 +47,7 @@ describe('interpretPayload — block_actions', () => {
 
   it('maps an action element to a fireAction', () => {
     const t = tokens([actionRef]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'button', action_id: t.id(0), value: '0' }],
@@ -61,7 +61,7 @@ describe('interpretPayload — block_actions', () => {
 
   it('emits every setData before any fireAction regardless of input order', () => {
     const t = tokens([actionRef, inputRef]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [
@@ -75,7 +75,7 @@ describe('interpretPayload — block_actions', () => {
   });
 
   it('skips an element whose action_id does not decode', () => {
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: 'nope', value: 'x' }],
@@ -86,7 +86,7 @@ describe('interpretPayload — block_actions', () => {
   });
 
   it('skips an element with no action_id at all', () => {
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       { type: 'block_actions', actions: [{ type: 'plain_text_input', value: 'x' }] },
       emptyRegistry,
     );
@@ -95,7 +95,7 @@ describe('interpretPayload — block_actions', () => {
 
   it('skips an input whose element type is unknown', () => {
     const t = tokens([inputRef]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'rich_text_input', action_id: t.id(0) }],
@@ -107,7 +107,7 @@ describe('interpretPayload — block_actions', () => {
 
   it('skips an input ref that carries no path', () => {
     const t = tokens([{ kind: 'input', surfaceId: 's1', componentId: 'c' }]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: t.id(0), value: 'x' }],
@@ -125,7 +125,7 @@ describe('interpretPayload — block_actions', () => {
       path: '/items/0/name~weird|x',
     };
     const t = tokens([ref]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [
@@ -138,6 +138,21 @@ describe('interpretPayload — block_actions', () => {
       { kind: 'setData', surfaceId: 's1', path: '/items/0/name~weird|x', value: 'v' },
     ]);
   });
+
+  it('returns a structured result: effects plus an (empty) diagnostics channel', () => {
+    const t = tokens([inputRef]);
+    const result = interpretPayload(
+      {
+        type: 'block_actions',
+        actions: [{ type: 'plain_text_input', action_id: t.id(0), value: 'Ada' }],
+      },
+      t.registry,
+    );
+    expect(result.effects).toEqual([
+      { kind: 'setData', surfaceId: 's1', path: '/user/name', value: 'Ada' },
+    ]);
+    expect(result.diagnostics).toEqual([]);
+  });
 });
 
 describe('custom-aware inbound', () => {
@@ -146,7 +161,7 @@ describe('custom-aware inbound', () => {
       { kind: 'action', surfaceId: 's', componentId: 'c', action: 'approve' },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       { type: 'block_actions', actions: [{ type: 'button', action_id: enc.id }] },
       enc.registry,
     );
@@ -174,7 +189,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'custom_range', action_id: enc.id, value: '1-9' }],
@@ -192,7 +207,7 @@ describe('custom-aware inbound', () => {
       { kind: 'input', surfaceId: 's', componentId: 'c', path: '' },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }],
@@ -207,7 +222,7 @@ describe('custom-aware inbound', () => {
       { kind: 'input', surfaceId: 's', componentId: 'c' }, // path omitted
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'x' }],
@@ -236,7 +251,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'x', action_id: enc.id, value: 'anything' }],
@@ -269,7 +284,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [
@@ -310,7 +325,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const run = (): readonly InboundEffect[] =>
+    const run = (): InboundResult =>
       interpretPayload(
         {
           type: 'block_actions',
@@ -320,7 +335,7 @@ describe('custom-aware inbound', () => {
         custom,
       );
     expect(run).not.toThrow();
-    expect(run()).toEqual([
+    expect(run().effects).toEqual([
       { kind: 'setData', surfaceId: 's', path: '/v', value: 'survives' },
     ]);
   });
@@ -336,7 +351,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'fallback' }],
@@ -368,7 +383,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'builtin' }],
@@ -400,7 +415,7 @@ describe('custom-aware inbound', () => {
       },
       emptyRegistry,
     );
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'block_actions',
         actions: [{ type: 'plain_text_input', action_id: enc.id, value: 'fallback2' }],
@@ -429,7 +444,7 @@ describe('interpretPayload — view_submission', () => {
       path: '/age',
     };
     const t = tokens([nameRef, ageRef]);
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'view_submission',
         view: {
@@ -450,7 +465,7 @@ describe('interpretPayload — view_submission', () => {
   });
 
   it('skips undecodable entries in a view submission', () => {
-    const effects = interpretPayload(
+    const { effects } = interpretPayload(
       {
         type: 'view_submission',
         view: {

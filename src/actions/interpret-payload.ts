@@ -1,7 +1,7 @@
 import { decodeActionId } from '../action-id/action-id.js';
 import type { TokenRegistry } from '../action-id/action-id.js';
 import type { ActionIdRef } from '../action-id/action-id-ref.js';
-import type { InboundEffect, JsonValue } from './inbound-effect.js';
+import type { InboundEffect, InboundResult, JsonValue } from './inbound-effect.js';
 import { extractValue } from './internal/extract-value.js';
 import type { InboundElement } from './internal/extract-value.js';
 import type { CustomComponentRegistry } from '../components/custom/custom-component.js';
@@ -29,12 +29,12 @@ export interface ViewSubmissionPayload {
 export type SlackInteractionPayload = BlockActionsPayload | ViewSubmissionPayload;
 
 /**
- * Interpret a Slack interaction payload as a pure list of [[InboundEffect]]s — it
- * never touches a `DataModel` or the network (the consumer applies the effects).
- * The per-surface token `registry` is required to decode each `action_id` back to
- * its `ActionIdRef`. Undecodable ids and unknown element types are skipped, never
- * thrown. `setData` effects always precede `fireAction` effects so an action's
- * context resolves against an up-to-date model.
+ * Interpret a Slack interaction payload as an `InboundResult` (effects + decode
+ * diagnostics) — it never touches a `DataModel` or the network (the consumer
+ * applies the effects). The per-surface token `registry` is required to decode each
+ * `action_id` back to its `ActionIdRef`. Undecodable ids and unknown element types
+ * are skipped, never thrown. `setData` effects always precede `fireAction` effects
+ * so an action's context resolves against an up-to-date model.
  *
  * `custom` is consulted for per-param value extractors only — render functions are
  * never invoked here; the decode path stays pure.
@@ -43,10 +43,12 @@ export function interpretPayload(
   payload: SlackInteractionPayload,
   registry: TokenRegistry,
   custom?: CustomComponentRegistry,
-): readonly InboundEffect[] {
-  if (payload.type === 'view_submission')
-    return fromViewSubmission(payload, registry, custom);
-  return fromBlockActions(payload, registry, custom);
+): InboundResult {
+  const effects =
+    payload.type === 'view_submission'
+      ? fromViewSubmission(payload, registry, custom)
+      : fromBlockActions(payload, registry, custom);
+  return { effects, diagnostics: [] };
 }
 
 function fromBlockActions(

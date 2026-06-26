@@ -32,3 +32,26 @@ export type InboundEffect =
       /** Resolved A2UI action value (custom multi-action). Absent for single-action built-ins. */
       readonly action?: string;
     };
+
+/**
+ * A loss on the inbound decode path that has no `InboundEffect` to carry it: a
+ * custom input extractor threw and was sandboxed (its write may be lost). Returned,
+ * never logged — observability is the host's job (the core stays pure).
+ */
+export interface InboundDiagnostic {
+  readonly kind: 'extractorThrew';
+  readonly surfaceId: string;
+  readonly componentId: string;
+  readonly path?: string;
+  readonly custom?: { readonly component: string; readonly param: string };
+  readonly reason: string;
+}
+
+/**
+ * The output of `interpretPayload`: the pure effects to apply, plus any decode-time
+ * diagnostics. Mirrors `RenderResult { blocks, degradations }` on the outbound path.
+ */
+export interface InboundResult {
+  readonly effects: readonly InboundEffect[];
+  readonly diagnostics: readonly InboundDiagnostic[];
+}

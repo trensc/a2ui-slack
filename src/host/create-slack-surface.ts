@@ -105,7 +105,7 @@ export function createSlackSurface(options: SlackSurfaceOptions = {}): SlackSurf
 
     async inbound(surfaceId, payload) {
       const registry = (await store.get(keyFor(surfaceId))) ?? emptyRegistry;
-      return interpretPayload(payload, registry, customRegistry);
+      return interpretPayload(payload, registry, customRegistry).effects;
     },
   };
 }
